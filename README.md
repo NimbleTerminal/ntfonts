@@ -10,7 +10,8 @@ ntfonts is a Go module that embeds seven OFL-licensed font families as 28 Latin
 subset faces (regular, bold, italic and bold italic of each), about 1.2 MB in
 total. It exists to give [nttypeset](https://nimbleterminal.dev/nttypeset) its
 faces: `ntfonts.Embedded` implements nttypeset's `FaceSource` without importing
-it. The module is standard-library only.
+it. The module has no dependencies; it was extracted from
+[Gloss](https://github.com/NimbleMarkets/gloss).
 
 ```sh
 go get nimbleterminal.dev/ntfonts
@@ -32,8 +33,8 @@ variant)` returns the TTF bytes.
 - Variant: `Regular`, `Bold`, `Italic` or `BoldItalic`.
 
 Anything else is an error that names the offender. `ntfonts.Licenses()` returns
-each family's OFL text, in the order below, for programs that must ship the
-notices.
+each family's OFL text, in the order of the list above, for programs that must
+ship the notices.
 
 ## Fonts
 

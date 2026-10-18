@@ -2,4 +2,4 @@
 
 ## Unreleased
 
-- Extracted from gloss: the seven OFL font families as 28 Latin subset faces, `Embedded`, `Families` and `Licenses`.
+- Extracted from gloss: seven OFL font families as 28 Latin subset faces, served by `Embedded`, with `Families` and `Licenses`.
