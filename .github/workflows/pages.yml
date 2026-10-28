@@ -1,0 +1,50 @@
+name: Specimen Pages
+on:
+  push:
+    branches: [main]
+    tags: ['v*', 'cjk/v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Main and release tags publish to the same site. Do not interrupt a deployment.
+concurrency:
+  group: specimen-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.2'
+          cache: false
+      - uses: go-task/setup-task@v2
+        with:
+          version: '3.x'
+      - run: task ci
+      - run: task specimen-build
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist/specimen
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy specimen
+        id: deployment
+        uses: actions/deploy-pages@v4

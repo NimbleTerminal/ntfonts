@@ -13,6 +13,11 @@ tasks:
   specimen:
     desc: Preview font coverage and fallbacks at http://127.0.0.1:8088
     cmds: ['go run ./internal/tools/specimen {{.CLI_ARGS}}']
+  specimen-build:
+    desc: Export a static specimen site (fresh output directory required)
+    vars:
+      OUT: '{{default "dist/specimen" .OUT}}'
+    cmds: ['go run ./internal/tools/specimen -out {{.OUT | shellQuote}}']
   list:
     desc: List available tasks
     cmds: ['task --list-all']

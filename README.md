@@ -144,6 +144,8 @@ Source code is MIT; see [LICENSE](./LICENSE). The fonts are OFL-1.1; see
 
 ## Specimen viewer
 
+[Web demo](https://nimbleterminal.github.io/ntfonts/) (deployed by GitHub Actions).
+
 Run `task specimen`, then open <http://127.0.0.1:8088>. Stop with Ctrl-C.
 Use `task specimen -- -addr 127.0.0.1:8090` to choose another port.
 The viewer has family/variant and size controls, editable text, multilingual
@@ -156,3 +158,9 @@ Core fonts come from `Embedded`; optional CJK files are read from the checkout
 without adding a module dependency. Only selected faces are loaded by the
 browser. All assets stay local. The viewer is a development tool; it does not
 change the library API or embed CJK in the core library.
+
+Build a static copy with `task specimen-build` (writes a new `dist/specimen/`
+directory), or `task specimen-build OUT=/tmp/ntfonts-site` for another fresh
+directory. Serve the output over HTTP; no Go server is needed in production.
+The export includes the font files, catalog and OFL notices and works under
+project paths such as `/ntfonts/`.

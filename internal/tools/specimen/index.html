@@ -1,4 +1,27 @@
 <!doctype html>
+<!--
+MIT License
+
+Copyright (c) 2024-2026 Neomantra Corp
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
 <html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,7 +31,7 @@
 *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 system-ui,sans-serif}main{max-width:1280px;margin:auto;padding:40px 32px}header{display:flex;justify-content:space-between;gap:24px;align-items:start;border-bottom:1px solid var(--line);padding-bottom:24px}.eyebrow{text-transform:uppercase;letter-spacing:.16em;color:var(--accent);font-size:12px;font-weight:700}h1{font-size:38px;letter-spacing:-.05em;margin:6px 0}p{margin:8px 0;color:var(--muted)}.badge{border:1px solid var(--line);border-radius:20px;padding:5px 12px;white-space:nowrap;font-size:12px}.controls{display:flex;gap:20px;flex-wrap:wrap;padding:24px 0;align-items:end}label{display:grid;gap:6px;font-size:12px;font-weight:650}select,textarea,button{font:inherit;color:inherit;border:1px solid var(--line);background:#fff;border-radius:6px;padding:10px}select{min-width:160px;font-size:14px}input[type=range]{accent-color:var(--accent);width:170px}input[type=checkbox]{accent-color:var(--accent)}.check{display:flex;align-items:center;gap:7px;padding-bottom:10px}textarea{width:100%;min-height:100px;resize:vertical;font-size:16px;line-height:1.5}.sample{font-size:var(--size);line-height:1.65;overflow-wrap:anywhere;white-space:pre-wrap;font-synthesis:none;font-variant-ligatures:none;font-feature-settings:"liga" 0,"clig" 0,"dlig" 0,"calt" 0}.columns{display:grid;grid-template-columns:1fr 1fr;gap:16px}.panel{background:white;border:1px solid var(--line);border-radius:8px;padding:22px;min-width:0}.panel h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}.section{margin:28px 0}h2{font-size:18px;margin:0 0 12px}.meta{font-size:12px;color:var(--muted);margin-top:12px}.missing{color:#aa392e;background:#ffede7;border-radius:3px;font: .7em/1.5 system-ui,sans-serif;padding:0 3px}.fallback{background:#edf5e9}.legend{font-size:13px}.swatch{display:inline-block;width:10px;height:10px;background:#edf5e9;border:1px solid #c4d4be;margin-right:4px}.error{color:#aa392e}footer{margin-top:36px;padding-top:20px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}#status{min-height:24px}button{cursor:pointer}button:hover{border-color:var(--accent)}@media(max-width:700px){main{padding:24px 16px}.columns{grid-template-columns:1fr}header{display:block}.badge{display:inline-block;margin-top:12px}.controls{gap:14px}h1{font-size:32px}}
 </style>
 <main>
-<header><div><div class="eyebrow">Nimble Terminal / Font library</div><h1>A closer look at every glyph.</h1><p>Compare the selected face with the optional symbol and regional fallbacks.</p></div><span class="badge">Local specimen · no external assets</span></header>
+<header><div><div class="eyebrow">Nimble Terminal / Font library</div><h1>A closer look at every glyph.</h1><p>Compare the selected face with the optional symbol and regional fallbacks.</p></div><span class="badge">Font specimen · no external assets</span></header>
 <div class="controls">
 <label>Family<select id="family" aria-label="Family"></select></label>
 <label>Variant<select id="variant"><option>Regular</option><option>Bold</option><option>Italic</option><option>BoldItalic</option></select></label>
@@ -20,7 +43,7 @@
 <p class="legend"><span class="swatch"></span>Fallback glyph <span class="missing">□</span> Missing glyph (hover for its codepoint). Missing characters are replaced explicitly, so system fonts cannot hide coverage gaps.</p>
 <section class="section"><h2>Your text</h2><label for="custom">Type or paste a sample</label><textarea id="custom" spellcheck="false">The quick brown fox jumps over the lazy dog. Café, ř ł ş ő ơ ạ — α ж → ✓ 漢字。</textarea><div id="customPreview" class="columns" style="margin-top:16px"></div></section>
 <section class="section"><h2>Script &amp; symbol specimens</h2><div id="specimens"></div></section>
-<footer>Browser shaping is a visual aid, not a reproduction of nttypeset layout. Discretionary ligatures and synthetic bold/italic are disabled. Symbols use upright Regular; SC italic variants use upright weights. SC uses Simplified Chinese glyph shapes even when showing kana or Hangul.</footer>
+<footer>Browser shaping is a visual aid, not a reproduction of nttypeset layout. Discretionary ligatures and synthetic bold/italic are disabled. Symbols use upright Regular; SC italic variants use upright weights. SC uses Simplified Chinese glyph shapes even when showing kana or Hangul. <a href="licenses.txt">Font licenses</a>.</footer>
 </main>
 <script>
 'use strict';
@@ -104,7 +127,7 @@ async function render(){
 }
 async function init(){
  try{
-  const response=await fetch('/api/fonts');if(!response.ok)throw Error('Could not load font catalog');catalog=await response.json();
+  const response=await fetch('fonts.json');if(!response.ok)throw Error('Could not load font catalog');catalog=await response.json();
   for(const family of [...new Set(catalog.map(f=>f.family))]){const option=document.createElement('option');option.value=option.textContent=family;$('family').append(option)}
   $('family').value='Literata';
   if(!catalog.some(f=>f.group==='cjk')){$('cjk').disabled=true;$('cjk').parentElement.title='Optional CJK assets were not found in this checkout'}

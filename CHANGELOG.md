@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Export a static specimen site with `task specimen-build`; publish GitHub
+  Pages from `main`, `v*`, and `cjk/v*` pushes after CI passes.
+
 - Add `task specimen`: a local browser viewer with editable samples, script
   coverage, variant/size controls, and explicit symbol/CJK fallback comparisons.
 

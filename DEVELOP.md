@@ -85,3 +85,21 @@ Core fonts come from `Embedded`; optional CJK files are read from the checkout
 without adding a module dependency. Only selected faces are loaded by the
 browser. All assets stay local. The viewer is a development tool; it does not
 change the library API or embed CJK in the core library.
+
+## GitHub Pages
+
+`.github/workflows/pages.yml` runs the full CI gate, exports the specimen, and
+deploys it on pushes to `main`, core version tags (`v*`), and CJK version tags
+(`cjk/v*`). It also supports manual runs. All triggers update the same Pages
+site; the most recent successful deployment replaces it (no per-tag archive).
+
+Repository setup: select **Settings → Pages → Build and deployment → Source →
+GitHub Actions**. If the `github-pages` environment restricts deployment refs,
+allow `main` and the version tag patterns too. The workflow does not change
+repository settings. After enabling Pages, rerun the workflow if an earlier
+deployment failed before setup was complete.
+
+`task specimen-build` exports to a fresh `dist/specimen/` directory. Use
+`OUT=/path/to/new-directory` for repeat builds without deleting prior output.
+Assets and the catalog use relative URLs, so the same build works at a project
+Pages path or a custom domain. Font licenses are linked from the viewer.
