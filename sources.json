@@ -108,5 +108,25 @@
     "file": "iosevka.zip",
     "url": "https://github.com/be5invis/Iosevka/releases/download/v34.9.0/PkgTTF-Iosevka-34.9.0.zip",
     "sha256": "c61a10b880bf3087f982217423fa2876a93803bd2a1901fbc52ab80c7329f716"
+  },
+  {
+    "file": "NotoSansSymbols2-Regular.ttf",
+    "url": "https://raw.githubusercontent.com/google/fonts/bd8f81ddb5c74d5c8897b36ad88b440266245103/ofl/notosanssymbols2/NotoSansSymbols2-Regular.ttf",
+    "sha256": "7d5fb73b7ca67a6798101741f5d280a3d016a56a197afcd4199dbb57b4b82a21"
+  },
+  {
+    "file": "notosanssymbols2-OFL.txt",
+    "url": "https://raw.githubusercontent.com/google/fonts/bd8f81ddb5c74d5c8897b36ad88b440266245103/ofl/notosanssymbols2/OFL.txt",
+    "sha256": "b118dd41337806a5d4797052c77caf3bd096aed783e5eb21b4d11154351e1ac0"
+  },
+  {
+    "file": "NotoSansMath-Regular.ttf",
+    "url": "https://raw.githubusercontent.com/google/fonts/bd8f81ddb5c74d5c8897b36ad88b440266245103/ofl/notosansmath/NotoSansMath-Regular.ttf",
+    "sha256": "3f495fe933c06786e4d5f6d86b8ee70b6753a68ee3b9d87528726de0f6e2c47d"
+  },
+  {
+    "file": "notosansmath-OFL.txt",
+    "url": "https://raw.githubusercontent.com/google/fonts/bd8f81ddb5c74d5c8897b36ad88b440266245103/ofl/notosansmath/OFL.txt",
+    "sha256": "403a95275b469061b7d4371c328e0ada3bc7d63328abe2e88aad5cd243b2fe21"
   }
 ]

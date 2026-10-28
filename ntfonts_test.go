@@ -1,8 +1,10 @@
 package ntfonts_test
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"os"
 	"slices"
@@ -20,8 +22,8 @@ func TestFontSubsetHashes(t *testing.T) {
 		t.Fatal(err)
 	}
 	lines := strings.Split(strings.TrimSpace(string(manifest)), "\n")
-	if len(lines) != 28 {
-		t.Fatal("expected 28 font faces")
+	if len(lines) != 29 {
+		t.Fatal("expected 29 font faces")
 	}
 	for _, line := range lines {
 		fields := strings.Fields(line)
@@ -43,7 +45,7 @@ func TestSourceFamilies(t *testing.T) {
 	if len(families) != 7 || !slices.IsSorted(families) {
 		t.Fatalf("families %v", families)
 	}
-	for _, family := range families {
+	for _, family := range append(families, ntfonts.Fallbacks()...) {
 		for _, variant := range variants {
 			data, err := ntfonts.Embedded.Face(family, variant)
 			if err != nil {
@@ -89,10 +91,10 @@ func TestSubsetCoverage(t *testing.T) {
 
 func TestLicenses(t *testing.T) {
 	licenses := ntfonts.Licenses()
-	if len(licenses) != 7 {
+	if len(licenses) != 8 {
 		t.Fatalf("%d licenses", len(licenses))
 	}
-	want := []string{"Literata", "Newsreader", "IBM Plex Sans", "Source Serif 4", "Iosevka", "IBM Plex Mono", "JetBrains Mono"}
+	want := []string{"Literata", "Newsreader", "IBM Plex Sans", "Source Serif 4", "Iosevka", "IBM Plex Mono", "JetBrains Mono", "Noto Sans Symbols 2"}
 	for i, l := range licenses {
 		if l.Family != want[i] {
 			t.Fatalf("license %d is %q, want %q", i, l.Family, want[i])
@@ -171,4 +173,81 @@ func parseCmap(data []byte) (func(rune) bool, error) {
 		}
 		return false
 	}, nil
+}
+
+func TestExpandedCoverage(t *testing.T) {
+	raw, err := os.ReadFile("coverage.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var want map[string]string
+	if err := json.Unmarshal(raw, &want); err != nil {
+		t.Fatal(err)
+	}
+	if len(want) != 28 {
+		t.Fatal("incomplete upstream coverage manifest")
+	}
+	for _, family := range ntfonts.Families() {
+		for _, variant := range variants {
+			data, err := ntfonts.Embedded.Face(family, variant)
+			if err != nil {
+				t.Fatal(err)
+			}
+			cmap, err := parseCmap(data)
+			if err != nil {
+				t.Fatal(err)
+			}
+			chars := want[strings.ReplaceAll(family, " ", "")+"/"+variant]
+			if chars == "" {
+				t.Fatal("missing upstream coverage", family, variant)
+			}
+			for _, r := range chars {
+				if !cmap(r) {
+					t.Fatalf("%s %s lost upstream %U", family, variant, r)
+				}
+			}
+		}
+	}
+}
+
+func TestFallbacksAndBudget(t *testing.T) {
+	if !slices.Equal(ntfonts.Families(), []string{"IBM Plex Mono", "IBM Plex Sans", "Iosevka", "JetBrains Mono", "Literata", "Newsreader", "Source Serif 4"}) {
+		t.Fatal("text family API changed")
+	}
+	if !slices.Equal(ntfonts.Fallbacks(), []string{"Noto Sans Symbols 2"}) {
+		t.Fatal("fallback order")
+	}
+	total := 0
+	for _, f := range ntfonts.Families() {
+		for _, v := range variants {
+			data, _ := ntfonts.Embedded.Face(f, v)
+			total += len(data)
+		}
+	}
+	regular, err := ntfonts.Embedded.Face("Noto Sans Symbols 2", "Regular")
+	if err != nil {
+		t.Fatal(err)
+	}
+	total += len(regular)
+	if total > 4_000_000 {
+		t.Fatalf("embedded fonts exceed 4 MB: %d", total)
+	}
+	for _, v := range variants {
+		data, err := ntfonts.Embedded.Face("Noto Sans Symbols 2", v)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(data, regular) {
+			t.Fatal("symbol variants must alias Regular")
+		}
+		cmap, err := parseCmap(data)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, r := range "▸▾▶▼◦▪■□→✓" {
+			if !cmap(r) {
+				t.Fatalf("symbols lack %U", r)
+			}
+		}
+	}
 }

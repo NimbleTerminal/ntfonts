@@ -5,7 +5,7 @@ Guidance for coding agents working in this repository.
 ## What this is
 
 `nimbleterminal.dev/ntfonts` is a Go module that embeds seven OFL-licensed font
-families as 28 Latin subset faces (about 1.2 MB), served through
+families as 28 text subset faces plus a symbol fallback (about 3.97 MB), served through
 `ntfonts.Embedded`, a `Source` whose `Face(family, variant)` method is
 nttypeset's `FaceSource`. It was extracted from gloss's typeset view. Develop
 with Go 1.27.2; the module minimum is Go 1.26.
@@ -29,7 +29,7 @@ task test                # tests
 task test-race           # race detector (needs a C compiler)
 task lint                # golangci-lint v2 (installed into .task/bin)
 task vet fmt fmt-check go-tidy-check go-verify
-task fonts-check         # verify the 28 subsets against subsets.sha256
+task fonts-check         # verify the 29 core subsets against subsets.sha256
 task build cross-windows cross-wasm
 task notices             # regenerate THIRD_PARTY_NOTICES.md
 task clean
@@ -43,7 +43,7 @@ GOWORK=off go test -mod=readonly -run 'TestName' .
 
 ## Module layout
 
-One Go module, `nimbleterminal.dev/ntfonts`. Never add local sibling `replace`
+Core module `nimbleterminal.dev/ntfonts` and optional nested `nimbleterminal.dev/ntfonts/cjk`. Root `task ci` checks both. Never add local sibling `replace`
 directives.
 
 | Path | Role |

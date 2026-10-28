@@ -41,6 +41,9 @@ func (Source) Face(family, variant string) ([]byte, error) {
 	if !variants[variant] {
 		return nil, fmt.Errorf("ntfonts: unknown variant %q", variant)
 	}
+	if family == "Noto Sans Symbols 2" {
+		return faces.ReadFile("GlossSymbols-Regular.ttf")
+	}
 	for _, f := range table {
 		if f.name == family {
 			return faces.ReadFile("Gloss" + f.letter + "-" + variant + ".ttf")
@@ -48,6 +51,12 @@ func (Source) Face(family, variant string) ([]byte, error) {
 	}
 	return nil, fmt.Errorf("ntfonts: unknown family %q", family)
 }
+
+// Fallbacks returns glyph-fallback families in renderer preference order.
+// Embedded.Face serves these families. Noto Sans Symbols 2 is upright Regular
+// for all four variants; no synthetic weight or slant is applied. The single
+// face includes missing arrows/math from Noto Sans Math.
+func Fallbacks() []string { return []string{"Noto Sans Symbols 2"} }
 
 // Families returns the available family names, sorted.
 func Families() []string {
@@ -62,13 +71,21 @@ func Families() []string {
 // License is the license text shipped for a family.
 type License struct{ Family, Text string }
 
-// Licenses returns the OFL text of every family, in the order of the table.
+// Licenses returns the OFL text of every text family followed by the fallback families.
 func Licenses() []License {
-	out := make([]License, len(table))
-	for i, f := range table {
+	all := append(append([]family(nil), table...), family{"Noto Sans Symbols 2", "Symbols", "notosanssymbols2"})
+	out := make([]License, len(all))
+	for i, f := range all {
 		text, err := licenseFiles.ReadFile(f.slug + ".OFL.txt")
 		if err != nil {
 			panic(err) // embedded at build time
+		}
+		if f.name == "Noto Sans Symbols 2" {
+			math, err := licenseFiles.ReadFile("notosansmath.OFL.txt")
+			if err != nil {
+				panic(err)
+			}
+			text = append(append(text, '\n'), math...)
 		}
 		out[i] = License{Family: f.name, Text: string(text)}
 	}

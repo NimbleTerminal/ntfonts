@@ -6,9 +6,9 @@
     <a href="./CODE_OF_CONDUCT.md"><img src="https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg" alt="Code Of Conduct"></a>
 </p>
 
-ntfonts is a Go module that embeds seven OFL-licensed font families as 28 Latin
-subset faces (regular, bold, italic and bold italic of each), about 1.2 MB in
-total. It exists to give [nttypeset](https://nimbleterminal.dev/nttypeset) its
+ntfonts is a Go module that embeds seven OFL-licensed font families as 28 text
+subset faces (regular, bold, italic and bold italic of each), plus one symbol
+fallback face, totaling 3,968,464 bytes (3.97 MB). It exists to give [nttypeset](https://nimbleterminal.dev/nttypeset) its
 faces: `ntfonts.Embedded` implements nttypeset's `FaceSource` without importing
 it. The module has no dependencies; it was extracted from
 [Gloss](https://github.com/NimbleMarkets/gloss).
@@ -32,8 +32,16 @@ variant)` returns the TTF bytes.
   `Iosevka`, `IBM Plex Mono` or `JetBrains Mono`.
 - Variant: `Regular`, `Bold`, `Italic` or `BoldItalic`.
 
+`ntfonts.Fallbacks()` returns `[]string{"Noto Sans Symbols 2"}` in renderer
+preference order. `Embedded.Face` accepts this name in all four variants;
+all return the same upright Regular face because this source has no Bold or
+Italic. Missing arrows/math (including →) are filled from pinned Noto Sans Math
+inside this single face; its OFL is included in the fallback license entry.
+The merged fallback supports horizontal text, not vertical or math layout. The caller implements glyph fallback; this package only returns bytes.
+`Families()` remains the seven text families above.
+
 Anything else is an error that names the offender. `ntfonts.Licenses()` returns
-each family's OFL text, in the order of the list above, for programs that must
+each family's OFL text, in the order of the list above followed by the fallback, for programs that must
 ship the notices.
 
 ## Fonts
@@ -66,13 +74,47 @@ python scripts/subset-fonts.py /tmp/ntfonts-sources --download
 The script verifies downloads, instances variable fonts at weight 400/700,
 uses their default width, and fixes optical sizes: Literata 12, Newsreader 16,
 Source Serif 4 16. It strips hints and discretionary ligature features, retaining
-composition, mark positioning, localization and kerning. The subset covers
-ASCII, Latin-1, combining marks U+0300–036F, general punctuation U+2000–206F,
-and U+FFFD when present in the source. It does not add glyphs absent upstream.
+composition, mark positioning, localization and kerning. The text subsets retain ASCII, Latin-1, Latin Extended A/B (U+0100–024F),
+spacing modifiers and combining marks (U+02B0–036F), Greek/Coptic and Cyrillic
+(U+0370–052F), and Latin Extended Additional including Vietnamese (U+1E00–1EFF).
+They also retain general punctuation (U+2000–206F), currency (U+20A0–20CF),
+letterlike symbols, number forms, arrows and math (U+2100–22FF), box drawing,
+blocks and geometric shapes (U+2500–25FF), check/cross marks U+2713/2714/2717/2718,
+and U+FFFD. The symbol fallback retains arrows and math (U+2190–22FF), box drawing,
+blocks, geometric shapes, miscellaneous symbols and dingbats (U+2500–27BF).
+Coverage varies by upstream family; `coverage.json` records the source-derived
+text coverage for every variant. It does not add glyphs absent upstream.
 The internal families are renamed `Gloss Text A` through `Gloss Text G` to
 avoid reserved font names. Runtime shaping also explicitly disables liga, clig,
 dlig and calt in nttypeset. There is no runtime font discovery, download, or
 system-font dependency.
+
+### Size and optional CJK
+
+| Default embedded set | Bytes |
+| --- | ---: |
+| Before (28 Latin subsets) | 1,202,648 |
+| Wider 28 text subsets | 3,866,672 |
+| Symbol fallback | 101,792 |
+| After (29 faces) | 3,968,464 |
+
+These are raw font bytes, not compressed module or binary sizes. No requested
+ranges were dropped to meet the 4,000,000-byte budget, which is tested.
+
+CJK is a separate nested module, `nimbleterminal.dev/ntfonts/cjk`, with its own
+`go.mod`. It is excluded from the parent module zip and dependency graph.
+Importing only ntfonts embeds no CJK data. Opt in with:
+
+```sh
+go get nimbleterminal.dev/ntfonts/cjk
+```
+
+Use `cjk.Fallbacks()` and `cjk.Embedded.Face(family, variant)` to register the
+regional faces with your renderer. Initially only `"Noto Sans CJK SC"` is
+available, with Regular and Bold (Italic/BoldItalic alias upright weights).
+SC glyph shapes are intended for Simplified Chinese; JP, TC and KR will be
+separate families, not aliases. See [the CJK README](cjk/README.md) for the Han
+list, per-face sizes and wasm cost. No renderer behavior changes here.
 
 ### Go reference fonts
 

@@ -120,6 +120,10 @@ tasks:
       - task: build
       - task: notices-check
       - task: vulncheck
+      - task: cjk-ci
+  cjk-ci:
+    desc: Run the optional CJK module gate
+    cmds: ['task --dir cjk ci']
   clean:
     desc: Remove generated binaries and task tools
     cmds: ['rm -rf bin dist .task']
