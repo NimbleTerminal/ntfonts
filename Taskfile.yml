@@ -10,6 +10,9 @@ vars:
 tasks:
   default:
     cmds: [{task: build}]
+  specimen:
+    desc: Preview font coverage and fallbacks at http://127.0.0.1:8088
+    cmds: ['go run ./internal/tools/specimen {{.CLI_ARGS}}']
   list:
     desc: List available tasks
     cmds: ['task --list-all']

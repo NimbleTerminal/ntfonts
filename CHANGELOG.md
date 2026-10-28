@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add `task specimen`: a local browser viewer with editable samples, script
+  coverage, variant/size controls, and explicit symbol/CJK fallback comparisons.
+
 - Widen text subsets to upstream Latin Extended/Vietnamese, Greek, Cyrillic,
   arrows, math, box drawing, geometric shapes and check marks. Default font
   bytes grow from 1,202,648 to 3,968,464, including the symbol fallback, below 4 MB.

@@ -70,3 +70,18 @@ pass, and publish the GitHub release with its changelog.
 
 Release the optional module with `cjk/vX.Y.Z` tags and configure its vanity
 import path separately. Parent tags do not release the nested module.
+
+## Specimen viewer
+
+Run `task specimen`, then open <http://127.0.0.1:8088>. Stop with Ctrl-C.
+Use `task specimen -- -addr 127.0.0.1:8090` to choose another port.
+The viewer has family/variant and size controls, editable text, multilingual
+samples, and side-by-side comparisons with symbol and SC CJK fallbacks.
+It reads each font's cmap and marks missing characters explicitly, preventing
+browser system-font fallback from disguising missing coverage. Hover a glyph
+for its source face or missing codepoint. Browser shaping is not nttypeset layout.
+
+Core fonts come from `Embedded`; optional CJK files are read from the checkout
+without adding a module dependency. Only selected faces are loaded by the
+browser. All assets stay local. The viewer is a development tool; it does not
+change the library API or embed CJK in the core library.

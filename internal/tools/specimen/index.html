@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ntfonts · Specimen</title>
+<style>
+:root{color-scheme:light;--paper:#f7f5ef;--ink:#242a27;--muted:#616b65;--line:#d7ddd5;--accent:#176747;--size:30px}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 system-ui,sans-serif}main{max-width:1280px;margin:auto;padding:40px 32px}header{display:flex;justify-content:space-between;gap:24px;align-items:start;border-bottom:1px solid var(--line);padding-bottom:24px}.eyebrow{text-transform:uppercase;letter-spacing:.16em;color:var(--accent);font-size:12px;font-weight:700}h1{font-size:38px;letter-spacing:-.05em;margin:6px 0}p{margin:8px 0;color:var(--muted)}.badge{border:1px solid var(--line);border-radius:20px;padding:5px 12px;white-space:nowrap;font-size:12px}.controls{display:flex;gap:20px;flex-wrap:wrap;padding:24px 0;align-items:end}label{display:grid;gap:6px;font-size:12px;font-weight:650}select,textarea,button{font:inherit;color:inherit;border:1px solid var(--line);background:#fff;border-radius:6px;padding:10px}select{min-width:160px;font-size:14px}input[type=range]{accent-color:var(--accent);width:170px}input[type=checkbox]{accent-color:var(--accent)}.check{display:flex;align-items:center;gap:7px;padding-bottom:10px}textarea{width:100%;min-height:100px;resize:vertical;font-size:16px;line-height:1.5}.sample{font-size:var(--size);line-height:1.65;overflow-wrap:anywhere;white-space:pre-wrap;font-synthesis:none;font-variant-ligatures:none;font-feature-settings:"liga" 0,"clig" 0,"dlig" 0,"calt" 0}.columns{display:grid;grid-template-columns:1fr 1fr;gap:16px}.panel{background:white;border:1px solid var(--line);border-radius:8px;padding:22px;min-width:0}.panel h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}.section{margin:28px 0}h2{font-size:18px;margin:0 0 12px}.meta{font-size:12px;color:var(--muted);margin-top:12px}.missing{color:#aa392e;background:#ffede7;border-radius:3px;font: .7em/1.5 system-ui,sans-serif;padding:0 3px}.fallback{background:#edf5e9}.legend{font-size:13px}.swatch{display:inline-block;width:10px;height:10px;background:#edf5e9;border:1px solid #c4d4be;margin-right:4px}.error{color:#aa392e}footer{margin-top:36px;padding-top:20px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}#status{min-height:24px}button{cursor:pointer}button:hover{border-color:var(--accent)}@media(max-width:700px){main{padding:24px 16px}.columns{grid-template-columns:1fr}header{display:block}.badge{display:inline-block;margin-top:12px}.controls{gap:14px}h1{font-size:32px}}
+</style>
+<main>
+<header><div><div class="eyebrow">Nimble Terminal / Font library</div><h1>A closer look at every glyph.</h1><p>Compare the selected face with the optional symbol and regional fallbacks.</p></div><span class="badge">Local specimen · no external assets</span></header>
+<div class="controls">
+<label>Family<select id="family" aria-label="Family"></select></label>
+<label>Variant<select id="variant"><option>Regular</option><option>Bold</option><option>Italic</option><option>BoldItalic</option></select></label>
+<label>Size <output id="sizeValue">30 px</output><input id="size" type="range" min="14" max="64" value="30"></label>
+<label class="check"><input id="symbols" type="checkbox" checked> Symbol fallback</label>
+<label class="check"><input id="cjk" type="checkbox"> SC CJK fallback</label>
+</div>
+<div id="status" class="meta" role="status" aria-live="polite">Loading font catalog…</div>
+<p class="legend"><span class="swatch"></span>Fallback glyph <span class="missing">□</span> Missing glyph (hover for its codepoint). Missing characters are replaced explicitly, so system fonts cannot hide coverage gaps.</p>
+<section class="section"><h2>Your text</h2><label for="custom">Type or paste a sample</label><textarea id="custom" spellcheck="false">The quick brown fox jumps over the lazy dog. Café, ř ł ş ő ơ ạ — α ж → ✓ 漢字。</textarea><div id="customPreview" class="columns" style="margin-top:16px"></div></section>
+<section class="section"><h2>Script &amp; symbol specimens</h2><div id="specimens"></div></section>
+<footer>Browser shaping is a visual aid, not a reproduction of nttypeset layout. Discretionary ligatures and synthetic bold/italic are disabled. Symbols use upright Regular; SC italic variants use upright weights. SC uses Simplified Chinese glyph shapes even when showing kana or Hangul.</footer>
+</main>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const samples=[
+ ['Latin & accents','Sphinx of black quartz, judge my vow.\nPříliš žluťoučký kůň. Zażółć gęślą jaźń.\nİstanbul · őrült · cœur · Straße'],
+ ['Vietnamese','Tiếng Việt: Chữ Quốc ngữ\nTrường học, tiếng nói, cộng đồng. ă â ê ô ơ ư đ ạ ệ ộ ớ ừ'],
+ ['Greek & Cyrillic','Ελληνικά: Καλημέρα κόσμε!\nРусский: Съешь ещё этих мягких французских булок.\nУкраїнська: Ґанок, їжак, єдність.'],
+ ['Arrows, math & interface','← ↑ → ↓ ↔ ⇒ ∑ ∏ ∫ √ ∞ ≠ ≤ ≥ ± × ÷\n▸ ▾ ▶ ▼ ◦ ▪ ■ □ ✓ ✔ ✗ ✘ ★ ☀ ☂'],
+ ['Box drawing & geometry','┌────────┬────────┐\n│ ░▒▓█   │ ○ ● ◇ ◆ │\n└────────┴────────┘'],
+ ['CJK · Simplified Chinese shapes','中文：你好，世界。漢字\nかな カタカナ · 한글 한국어\nCommon-use boundary: 字 / 𠀀']
+];
+let catalog=[], generation=0;
+const cache=new Map();
+// Read actual cmap glyph indices rather than trusting the browser's font fallback.
+function cmap(buffer){
+ const d=new DataView(buffer),u16=o=>d.getUint16(o),u32=o=>d.getUint32(o);
+ let base=0;
+ for(let i=0;i<u16(4);i++){const o=12+i*16;if(u32(o)===0x636d6170)base=u32(o+8)}
+ if(!base)throw Error('Font has no cmap');
+ const maps=[];
+ for(let i=0;i<u16(base+2);i++){
+  const rec=base+4+i*8,platform=u16(rec),encoding=u16(rec+2);
+  if(platform!==0 && !(platform===3 && (encoding===1 || encoding===10)))continue;
+  const o=base+u32(rec+4),format=u16(o);
+  if(format===12){maps.push(cp=>{for(let j=0;j<u32(o+12);j++){const g=o+16+j*12,start=u32(g),end=u32(g+4);if(cp>=start&&cp<=end)return u32(g+8)+cp-start!==0}return false})}
+  if(format===4){maps.push(cp=>{
+   if(cp>65535)return false;
+   const n=u16(o+6)/2,ends=o+14,starts=ends+2*n+2,deltas=starts+2*n,offsets=deltas+2*n;
+   for(let j=0;j<n;j++)if(cp>=u16(starts+2*j)&&cp<=u16(ends+2*j)){
+    const delta=u16(deltas+2*j),offset=u16(offsets+2*j);
+    if(!offset)return ((cp+delta)&65535)!==0;
+    const glyph=u16(offsets+2*j+offset+2*(cp-u16(starts+2*j)));
+    return glyph!==0&&((glyph+delta)&65535)!==0;
+   }return false;
+  })}
+ }
+ if(!maps.length)throw Error('Font has no supported Unicode cmap');
+ return cp=>maps.some(map=>map(cp));
+}
+async function load(face){
+ if(!cache.has(face.url))cache.set(face.url,(async()=>{
+  const response=await fetch(face.url);if(!response.ok)throw Error('Could not load '+face.family);
+  const buffer=await response.arrayBuffer(),has=cmap(buffer),name='Specimen'+catalog.indexOf(face);
+  const font=new FontFace(name,buffer);await font.load();document.fonts.add(font);
+  return {...face,name,has};
+ })().catch(error=>{cache.delete(face.url);throw error}));
+ return cache.get(face.url);
+}
+function pick(family,variant){
+ return catalog.find(f=>f.family===family&&f.variant===variant)||catalog.find(f=>f.family===family&&f.variant===(variant.includes('Bold')?'Bold':'Regular'))||catalog.find(f=>f.family===family&&f.variant==='Regular');
+}
+function panel(text,fonts,title){
+ const box=document.createElement('div');box.className='panel';
+ const h=document.createElement('h3');h.textContent=title;box.append(h);
+ const sample=document.createElement('div');sample.className='sample';let missing=0,fallback=0;
+ for(const char of text){
+  if(char==='\n'||char==='\r'||char==='\t'){sample.append(document.createTextNode(char));continue}
+  const cp=char.codePointAt(0),index=fonts.findIndex(f=>f.has(cp)),span=document.createElement('span');
+  if(index<0){missing++;span.textContent='□';span.className='missing';span.title='Missing '+char+' · U+'+cp.toString(16).toUpperCase().padStart(4,'0')}
+  else{span.textContent=char;span.style.fontFamily=fonts[index].name;span.title=fonts[index].family+' · '+fonts[index].variant;if(index>0){fallback++;span.className='fallback'}}
+  sample.append(span);
+ }
+ box.append(sample);const meta=document.createElement('div');meta.className='meta';meta.textContent=`${missing} missing · ${fallback} fallback characters`;box.append(meta);return box;
+}
+function compare(target,text,primary,chain){target.replaceChildren(panel(text,[primary],'Selected face only'),panel(text,chain,'With enabled fallbacks'))}
+async function render(){
+ const current=++generation;$('status').classList.remove('error');$('status').textContent='Loading selected faces…';
+ try{
+  const variant=$('variant').value,selected=pick($('family').value,variant),requested=[selected];
+  if($('symbols').checked)requested.push(pick('Noto Sans Symbols 2',variant));
+  if($('cjk').checked)requested.push(pick('Noto Sans CJK SC',variant));
+  const fonts=await Promise.all([...new Set(requested.filter(Boolean))].map(load));
+  if(current!==generation)return;
+  const primary=fonts[0];
+  $('status').textContent=`${primary.family} · requested ${variant}, actual ${primary.variant} · ${primary.bytes.toLocaleString()} bytes. Active chain: ${fonts.map(f=>f.family).join(' → ')}`;
+  compare($('customPreview'),$('custom').value,primary,fonts);
+  $('specimens').replaceChildren();
+  for(const [title,text] of samples){const section=document.createElement('section');section.className='section';const h=document.createElement('h2');h.textContent=title;const grid=document.createElement('div');grid.className='columns';compare(grid,text,primary,fonts);section.append(h,grid);$('specimens').append(section)}
+ }catch(error){if(current===generation){$('status').textContent=error.message;$('status').classList.add('error')}}
+}
+async function init(){
+ try{
+  const response=await fetch('/api/fonts');if(!response.ok)throw Error('Could not load font catalog');catalog=await response.json();
+  for(const family of [...new Set(catalog.map(f=>f.family))]){const option=document.createElement('option');option.value=option.textContent=family;$('family').append(option)}
+  $('family').value='Literata';
+  if(!catalog.some(f=>f.group==='cjk')){$('cjk').disabled=true;$('cjk').parentElement.title='Optional CJK assets were not found in this checkout'}
+  for(const id of ['family','variant','symbols','cjk'])$(id).addEventListener('change',render);
+  $('custom').addEventListener('input',render);
+  $('size').addEventListener('input',()=>{document.documentElement.style.setProperty('--size',$('size').value+'px');$('sizeValue').value=$('size').value+' px'});
+  await render();
+ }catch(error){$('status').textContent=error.message;$('status').classList.add('error')}
+}
+init();
+</script>
+</html>
