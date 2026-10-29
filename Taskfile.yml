@@ -130,7 +130,7 @@ tasks:
       - task: vulncheck
       - task: cjk-ci
   cjk-ci:
-    desc: Run the optional CJK module gate
+    desc: Run the optional CJK module gate including leaf link-isolation tests
     cmds: ['task --dir cjk ci']
   clean:
     desc: Remove generated binaries and task tools

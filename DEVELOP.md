@@ -45,7 +45,8 @@ release; `sources.json` records exact URLs and SHA-256 hashes, and the script
 verifies every download. It rewrites the 29 `Gloss*.ttf` files, the source-derived
 `coverage.json`, and
 `subsets.sha256`. Build CJK separately with the same command plus `--cjk`;
-that uses `cjk/sources.json`, writes its two OTFs and `cjk/subsets.sha256`,
+that uses `cjk/sources.json`, writes one OTF each under `cjk/scregular/` and `cjk/scbold/`, plus
+`cjk/subsets.sha256`,
 and reads the checked-in `cjk/data/gb2312-han.txt`. CJK is pinned to Noto Sans
 CJK Sans2.004; symbols and supplemental math glyphs use the same Google Fonts
 commit as the text faces. After regenerating, run `task fonts-check` and `task ci`,
@@ -103,3 +104,9 @@ deployment failed before setup was complete.
 `OUT=/path/to/new-directory` for repeat builds without deleting prior output.
 Assets and the catalog use relative URLs, so the same build works at a project
 Pages path or a custom domain. Font licenses are linked from the viewer.
+
+CJK leaf packages embed one font each. Keep shared notices in
+`cjk/internal/notice` free of dependencies on public font packages. Root
+`task cjk-ci` runs the nested gate, including dependency and binary link-isolation
+tests for both leaves. `task --dir cjk notices-check` also regenerates
+`cjk/dist/THIRD_PARTY_NOTICES.md` for review.

@@ -33,7 +33,7 @@ tasks:
     desc: Verify downloaded module contents
     cmds: ['go mod verify']
   fonts-check:
-    desc: Verify the embedded font subsets against subsets.sha256
+    desc: Verify leaf font files against module-relative subsets.sha256 paths
     cmds:
       - |
         if command -v shasum >/dev/null; then
@@ -42,7 +42,7 @@ tasks:
           sha256sum -c subsets.sha256
         fi
   test:
-    desc: Run tests
+    desc: Run API, coverage, and leaf link-isolation tests
     cmds: ['go test -mod=readonly ./...']
   test-race:
     desc: Run tests with the race detector

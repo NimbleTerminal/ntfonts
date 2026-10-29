@@ -1,47 +1,38 @@
-// Package cjk serves optional regional CJK subsets without enlarging ntfonts.
+// Package cjk serves both optional SC weights. Import cjk/scregular or
+// cjk/scbold instead to link only one weight. No CJK data is linked by ntfonts.
 package cjk
 
 import (
-	"embed"
 	"fmt"
+	"nimbleterminal.dev/ntfonts/cjk/internal/notice"
+	"nimbleterminal.dev/ntfonts/cjk/scbold"
+	"nimbleterminal.dev/ntfonts/cjk/scregular"
 )
-
-//go:embed GlossCJKSC-*.otf
-var faces embed.FS
-
-//go:embed notosanscjksc.OFL.txt
-var licenseText string
 
 // Source serves regional CJK faces. Italic variants use upright faces.
 type Source struct{}
 
-// Embedded is the source over the optional CJK subsets.
+// Embedded serves both SC weights; importing this package links both fonts.
 var Embedded Source
 
 // Fallbacks returns available regional families. Hosts choose the region that
 // matches their content; SC shapes are not a substitute for JP, TC, or KR shapes.
-func Fallbacks() []string { return []string{"Noto Sans CJK SC"} }
+func Fallbacks() []string { return scregular.Fallbacks() }
 
-// Face returns font bytes for the named regional family and variant.
+// Face returns Regular for Regular/Italic and Bold for Bold/BoldItalic.
 func (Source) Face(family, variant string) ([]byte, error) {
 	switch variant {
 	case "Regular", "Italic":
-		variant = "Regular"
+		return scregular.Embedded.Face(family, variant)
 	case "Bold", "BoldItalic":
-		variant = "Bold"
+		return scbold.Embedded.Face(family, variant)
 	default:
 		return nil, fmt.Errorf("cjk: unknown variant %q", variant)
-	}
-	switch family {
-	case "Noto Sans CJK SC":
-		return faces.ReadFile("GlossCJKSC-" + variant + ".otf")
-	default:
-		return nil, fmt.Errorf("cjk: unknown family %q", family)
 	}
 }
 
 // License is the license text shipped for a regional family.
-type License struct{ Family, Text string }
+type License = notice.License
 
-// Licenses returns the OFL notices for the embedded regional families.
-func Licenses() []License { return []License{{"Noto Sans CJK SC", licenseText}} }
+// Licenses returns one shared OFL notice for the SC family.
+func Licenses() []License { return notice.Licenses() }

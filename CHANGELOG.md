@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Split CJK into flat `cjk/scregular` (4,050,340 font bytes) and `cjk/scbold`
+  (4,080,980 bytes) leaf packages, each serving one weight for all variants.
+  `cjk` retains its two-weight API and 8,131,320-byte payload. Fonts and hashes
+  are unchanged; only their paths move. Share the OFL notice without importing
+  fonts, and verify both dependency and linked-binary isolation.
+
 - Export a static specimen site with `task specimen-build`; publish GitHub
   Pages from `main`, `v*`, and `cjk/v*` pushes after CI passes.
 

@@ -106,15 +106,17 @@ CJK is a separate nested module, `nimbleterminal.dev/ntfonts/cjk`, with its own
 Importing only ntfonts embeds no CJK data. Opt in with:
 
 ```sh
-go get nimbleterminal.dev/ntfonts/cjk
+go get nimbleterminal.dev/ntfonts/cjk/scregular
 ```
 
-Use `cjk.Fallbacks()` and `cjk.Embedded.Face(family, variant)` to register the
-regional faces with your renderer. Initially only `"Noto Sans CJK SC"` is
-available, with Regular and Bold (Italic/BoldItalic alias upright weights).
-SC glyph shapes are intended for Simplified Chinese; JP, TC and KR will be
-separate families, not aliases. See [the CJK README](cjk/README.md) for the Han
-list, per-face sizes and wasm cost. No renderer behavior changes here.
+Use `scregular.Fallbacks()` and `scregular.Embedded.Face(family, variant)` to
+register SC Regular only (4,050,340 font bytes). `cjk/scbold` links SC Bold only
+(4,080,980 bytes). Each leaf serves its weight for all four variants. The
+combined `cjk` package retains both weights and its existing API (8,131,320
+bytes). The module download contains both; leaf imports reduce binary size.
+SC glyph shapes are intended for Simplified Chinese; future JP, TC and KR
+faces will use separate packages and family names. See [the CJK README](cjk/README.md)
+for per-package sizes, the Han list and wasm cost.
 
 ### Go reference fonts
 

@@ -13,13 +13,16 @@ import (
 
 func TestViewer(t *testing.T) {
 	root := t.TempDir()
-	if err := os.Mkdir(filepath.Join(root, "cjk"), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Join(root, "cjk", "scregular"), 0755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, "cjk", "GlossCJKSC-Regular.otf"), []byte("optional font"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "cjk", "scregular", "GlossCJKSC-Regular.otf"), []byte("optional font"), 0644); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, "cjk", "notosanscjksc.OFL.txt"), []byte("test CJK license"), 0644); err != nil {
+	if err := os.MkdirAll(filepath.Join(root, "cjk", "internal", "notice"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "cjk", "internal", "notice", "notosanscjksc.OFL.txt"), []byte("test CJK license"), 0644); err != nil {
 		t.Fatal(err)
 	}
 	handler, err := viewer(root)

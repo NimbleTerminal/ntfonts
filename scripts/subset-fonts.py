@@ -52,8 +52,10 @@ def save(font, codepoints, ident, variant, dest):
   cff.topDictIndex[0].FamilyName=familyname; cff.topDictIndex[0].FullName=names[4]
  font.recalcTimestamp=False
  font['head'].created=font['head'].modified=2082844800
+ dest.parent.mkdir(parents=True,exist_ok=True)
  font.save(dest,reorderTables=True)
- hashes[dest.name]=hashlib.sha256(dest.read_bytes()).hexdigest()
+ name=dest.relative_to(output).as_posix() if dest.is_relative_to(output) else dest.name
+ hashes[name]=hashlib.sha256(dest.read_bytes()).hexdigest()
 
 hashes={}
 if args.cjk:
@@ -63,7 +65,7 @@ if args.cjk:
  codepoints=han|{ord('漢')}|points([(0x20,0x7e),(0x1100,0x11ff),(0x3000,0x30ff),(0x3130,0x318f),(0xa960,0xa97f),(0xac00,0xd7ff),(0xff00,0xffef)])
  for variant in ['Regular','Bold']:
   font=TTFont(args.cache/('NotoSansCJKsc-'+variant+'.otf'),recalcTimestamp=False)
-  save(font,codepoints,'CJKSC',variant,output/('GlossCJKSC-'+variant+'.otf'))
+  save(font,codepoints,'CJKSC',variant,output/('sc'+variant.lower())/('GlossCJKSC-'+variant+'.otf'))
 else:
  families=[('A','literata','Literata','opsz,wght',12),('B','newsreader','Newsreader','opsz,wght',16),('C','ibmplexsans','IBMPlexSans','wdth,wght',None),('D','sourceserif4','SourceSerif4','opsz,wght',16),('E','iosevka','Iosevka',None,None),('F','ibmplexmono','IBMPlexMono',None,None),('G','jetbrainsmono','JetBrainsMono','wght',None)]
  coverage={}

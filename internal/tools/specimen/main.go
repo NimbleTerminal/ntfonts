@@ -50,7 +50,7 @@ func siteFiles(root string) (map[string][]byte, error) {
 	}
 	// Read optional CJK assets from the checkout; never import/embed the CJK module.
 	for _, variant := range variants[:2] {
-		name := filepath.Join(root, "cjk", "GlossCJKSC-"+variant+".otf")
+		name := filepath.Join(root, "cjk", "sc"+strings.ToLower(variant), "GlossCJKSC-"+variant+".otf")
 		data, err := os.ReadFile(name)
 		if os.IsNotExist(err) {
 			continue
@@ -89,7 +89,7 @@ func siteFiles(root string) (map[string][]byte, error) {
 		if f.Group != "cjk" {
 			continue
 		}
-		license, err := os.ReadFile(filepath.Join(root, "cjk", "notosanscjksc.OFL.txt"))
+		license, err := os.ReadFile(filepath.Join(root, "cjk", "internal", "notice", "notosanscjksc.OFL.txt"))
 		if err != nil {
 			return nil, fmt.Errorf("CJK license: %w", err)
 		}
