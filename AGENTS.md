@@ -8,7 +8,7 @@ Guidance for coding agents working in this repository.
 families as 28 text subset faces plus a symbol fallback (about 3.97 MB), served through
 `ntfonts.Embedded`, a `Source` whose `Face(family, variant)` method is
 nttypeset's `FaceSource`. It was extracted from gloss's typeset view. Develop
-with Go 1.27.2; the module minimum is Go 1.26.
+with Go 1.27.3; the module minimum is Go 1.26.
 
 What it is not:
 

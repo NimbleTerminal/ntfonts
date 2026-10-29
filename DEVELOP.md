@@ -1,6 +1,6 @@
 # Development
 
-Use Go 1.27.2 for development and CI (the module minimum is Go 1.26). The root
+Use Go 1.27.3 for development and CI (the module minimum is Go 1.26). The root
 module and optional `cjk/` nested module have no dependencies.
 The root `task ci` also runs the CJK module gate. Installed QA tools live in
 `.task/bin/` and generated output in
