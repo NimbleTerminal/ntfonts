@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## v0.2.0 - 2026-10-29
+
+The optional CJK module is released separately as `cjk/v0.1.0`.
+
 - Split CJK into flat `cjk/scregular` (4,050,340 font bytes) and `cjk/scbold`
   (4,080,980 bytes) leaf packages, each serving one weight for all variants.
   `cjk` retains its two-weight API and 8,131,320-byte payload. Fonts and hashes
