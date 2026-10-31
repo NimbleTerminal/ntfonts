@@ -217,6 +217,15 @@ func TestFallbacksAndBudget(t *testing.T) {
 	if !slices.Equal(ntfonts.Fallbacks(), []string{"Noto Sans Symbols 2"}) {
 		t.Fatal("fallback order")
 	}
+	var source interface{ Fallbacks() []string } = ntfonts.Embedded
+	got := source.Fallbacks()
+	if !slices.Equal(got, ntfonts.Fallbacks()) {
+		t.Fatal("source fallback order differs from package function")
+	}
+	got[0] = "changed"
+	if !slices.Equal(source.Fallbacks(), ntfonts.Fallbacks()) {
+		t.Fatal("source fallback slice is shared")
+	}
 	total := 0
 	for _, f := range ntfonts.Families() {
 		for _, v := range variants {

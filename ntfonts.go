@@ -58,6 +58,10 @@ func (Source) Face(family, variant string) ([]byte, error) {
 // face includes missing arrows/math from Noto Sans Math.
 func Fallbacks() []string { return []string{"Noto Sans Symbols 2"} }
 
+// Fallbacks returns the same ordered glyph-fallback families as the package
+// function, allowing renderers to discover them through the source itself.
+func (Source) Fallbacks() []string { return Fallbacks() }
+
 // Families returns the available family names, sorted.
 func Families() []string {
 	names := make([]string, len(table))

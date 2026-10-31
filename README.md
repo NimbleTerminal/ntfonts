@@ -32,7 +32,8 @@ variant)` returns the TTF bytes.
   `Iosevka`, `IBM Plex Mono` or `JetBrains Mono`.
 - Variant: `Regular`, `Bold`, `Italic` or `BoldItalic`.
 
-`ntfonts.Fallbacks()` returns `[]string{"Noto Sans Symbols 2"}` in renderer
+`ntfonts.Fallbacks()` and `ntfonts.Embedded.Fallbacks()` return
+`[]string{"Noto Sans Symbols 2"}` in renderer
 preference order. `Embedded.Face` accepts this name in all four variants;
 all return the same upright Regular face because this source has no Bold or
 Italic. Missing arrows/math (including →) are filled from pinned Noto Sans Math

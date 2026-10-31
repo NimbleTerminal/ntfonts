@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## v0.2.1 - 2026-10-31
+
+- Add `Source.Fallbacks()` so renderers can discover symbol fallback families
+  through the font source; the package-level `Fallbacks()` remains available.
+
 ## v0.2.0 - 2026-10-29
 
 The optional CJK module is released separately as `cjk/v0.1.0`.
