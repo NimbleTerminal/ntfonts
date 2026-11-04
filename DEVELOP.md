@@ -79,9 +79,13 @@ replacements. Update CHANGELOG.md, run `task ci`, and review font licenses. Then
 commit the release preparation, tag the intended version, wait for tag CI to
 pass, and publish the GitHub release with its changelog.
 
-Release the optional modules with `cjk/vX.Y.Z`, `packs/vX.Y.Z` and
-`packs/emoji/vX.Y.Z` tags. Parent tags do not release the nested modules, and
-the vanity redirect for the first path segment covers them all.
+All four modules release together under one version number (release
+harmony): every release creates the tags `vX.Y.Z`, `cjk/vX.Y.Z`,
+`packs/vX.Y.Z` and `packs/emoji/vX.Y.Z` on the same commit, and every module's
+CHANGELOG gets a heading for that version even when its code did not change.
+Parent tags do not release the nested modules on their own, and the vanity
+redirect for the first path segment covers them all. Nested modules have no
+`require` on each other, so no go.mod edits are needed to bump.
 
 ## Specimen viewer
 

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.3.0 - 2026-11-04
+
 - Add the optional `nimbleterminal.dev/ntfonts/packs` module: seven Noto Sans
   script packages (Arabic, Hebrew, Devanagari, Bengali, Tamil, Thai, Khmer)
   with every layout feature retained, a combined `packs` source, and
@@ -13,6 +15,10 @@
 - The specimen viewer catalogs pack faces found in the checkout (coverage, not
   shaping). Root `task ci` runs the `packs` and `emoji` gates; Pages deploys on
   `packs/v*` and `packs/emoji/v*` tags.
+- Release harmony: from this release the core, `cjk`, `packs` and `packs/emoji`
+  modules share one version number and are tagged together (`v0.3.0`,
+  `cjk/v0.3.0`, `packs/v0.3.0`, `packs/emoji/v0.3.0`). The core font payload
+  and API are unchanged from v0.2.1.
 
 - Update QA tools to golangci-lint v2.15.0 and govulncheck v1.9.0 for both modules.
   Refresh cached golangci-lint binaries when the pinned version changes.

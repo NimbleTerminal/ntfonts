@@ -86,6 +86,9 @@ Breaking these breaks consumers, even if tests still pass.
 - **Family and variant names are the API.** `Families()` returns the seven
   upstream names; variants are `Regular`, `Bold`, `Italic`, `BoldItalic`.
 - **The `Go*.ttf` files are not embedded.**
+- **Release harmony.** Core, `cjk`, `packs` and `packs/emoji` share one version
+  and are tagged together (`vX.Y.Z`, `cjk/vX.Y.Z`, `packs/vX.Y.Z`,
+  `packs/emoji/vX.Y.Z`); every CHANGELOG gets the heading.
 
 ## Tests and reporting
 
