@@ -4,6 +4,7 @@ package cjk
 
 import (
 	"fmt"
+	"io/fs"
 	"nimbleterminal.dev/ntfonts/cjk/internal/notice"
 	"nimbleterminal.dev/ntfonts/cjk/scbold"
 	"nimbleterminal.dev/ntfonts/cjk/scregular"
@@ -30,6 +31,15 @@ func (Source) Face(family, variant string) ([]byte, error) {
 		return nil, fmt.Errorf("cjk: unknown variant %q", variant)
 	}
 }
+
+// Files returns both embedded font files under their public names.
+func Files() fs.FS { return union{scregular.Files(), scbold.Files()} }
+
+// WebFace describes one embedded file for a browser FontFace.
+type WebFace = notice.WebFace
+
+// WebFaces returns fresh descriptors for both files, Regular first.
+func WebFaces() []WebFace { return append(scregular.WebFaces(), scbold.WebFaces()...) }
 
 // License is the license text shipped for a regional family.
 type License = notice.License

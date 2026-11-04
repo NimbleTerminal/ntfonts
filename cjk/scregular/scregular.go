@@ -5,6 +5,7 @@ package scregular
 import (
 	"embed"
 	"fmt"
+	"io/fs"
 	"nimbleterminal.dev/ntfonts/cjk/internal/notice"
 )
 
@@ -32,6 +33,17 @@ func (Source) Face(family, variant string) ([]byte, error) {
 		return nil, fmt.Errorf("cjk: unknown family %q", family)
 	}
 	return face.ReadFile("GlossCJKSC-Regular.otf")
+}
+
+// Files returns the embedded font file under its public name.
+func Files() fs.FS { return face }
+
+// WebFace describes one embedded file for a browser FontFace.
+type WebFace = notice.WebFace
+
+// WebFaces returns a fresh descriptor for the single embedded file.
+func WebFaces() []WebFace {
+	return []WebFace{{Family: "Noto Sans CJK SC", File: "GlossCJKSC-Regular.otf", Weight: 400, Style: "normal"}}
 }
 
 // License is the license text shipped for a regional family.

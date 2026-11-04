@@ -29,6 +29,12 @@ Unknown families or variants remain errors. All three packages expose
 `Embedded`, `Source`, `Fallbacks()` and `Licenses()`, with family
 `"Noto Sans CJK SC"` and the same shared `License` type.
 
+`Files()` returns the embedded files as an `fs.FS` and `WebFaces()` describes
+each with the fields of ntwebterm's `fontFaces` option (`Family`, `File`,
+`Weight`, `Style`), so a booba host can serve the same bytes to a browser:
+`http.FileServer(http.FS(scregular.Files()))` under `/fonts/`, with `src` set to
+`/fonts/` plus each `File`. The combined `cjk` package aggregates both.
+
 Import `cjk` itself when you want both weights: its existing API is unchanged,
 with Regular/Italic using Regular and Bold/BoldItalic using Bold. It imports
 the two leaf packages; importing either leaf never imports its sibling or the

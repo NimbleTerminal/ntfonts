@@ -5,11 +5,14 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"io/fs"
 	"nimbleterminal.dev/ntfonts/cjk"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
+	"testing/fstest"
 )
 
 func TestFaces(t *testing.T) {
@@ -181,5 +184,38 @@ func TestCommonUseHan(t *testing.T) {
 				t.Fatalf("%s lacks common-use %U", variant, r)
 			}
 		}
+	}
+}
+
+func TestFilesAndWebFaces(t *testing.T) {
+	want := []cjk.WebFace{
+		{Family: "Noto Sans CJK SC", File: "GlossCJKSC-Regular.otf", Weight: 400, Style: "normal"},
+		{Family: "Noto Sans CJK SC", File: "GlossCJKSC-Bold.otf", Weight: 700, Style: "normal"},
+	}
+	got := cjk.WebFaces()
+	if !slices.Equal(got, want) {
+		t.Fatalf("%+v", got)
+	}
+	for i, weight := range []string{"Regular", "Bold"} {
+		data, err := fs.ReadFile(cjk.Files(), got[i].File)
+		if err != nil {
+			t.Fatal(err)
+		}
+		face, _ := cjk.Embedded.Face("Noto Sans CJK SC", weight)
+		if !bytes.Equal(data, face) {
+			t.Fatalf("%s differs from Face", got[i].File)
+		}
+	}
+	if err := fstest.TestFS(cjk.Files(), "GlossCJKSC-Regular.otf", "GlossCJKSC-Bold.otf"); err != nil {
+		t.Fatal(err)
+	}
+	for _, bad := range []string{"../x", "/abs"} {
+		if _, err := cjk.Files().Open(bad); err == nil {
+			t.Fatalf("opened %q", bad)
+		}
+	}
+	got[0].Family = "changed"
+	if cjk.WebFaces()[0].Family != "Noto Sans CJK SC" {
+		t.Fatal("WebFaces slice is shared")
 	}
 }

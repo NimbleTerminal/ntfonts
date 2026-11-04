@@ -3,6 +3,7 @@ package cjk_test
 import (
 	"bytes"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -22,9 +23,11 @@ func TestLeafFaces(t *testing.T) {
 		}
 		families []string
 		licenses []cjk.License
+		files    fs.FS
+		webFaces []cjk.WebFace
 	}{
-		{"scregular", "Regular", scregular.Embedded, scregular.Fallbacks(), scregular.Licenses()},
-		{"scbold", "Bold", scbold.Embedded, scbold.Fallbacks(), scbold.Licenses()},
+		{"scregular", "Regular", scregular.Embedded, scregular.Fallbacks(), scregular.Licenses(), scregular.Files(), scregular.WebFaces()},
+		{"scbold", "Bold", scbold.Embedded, scbold.Fallbacks(), scbold.Licenses(), scbold.Files(), scbold.WebFaces()},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if len(tc.families) != 1 || tc.families[0] != "Noto Sans CJK SC" {
@@ -36,6 +39,13 @@ func TestLeafFaces(t *testing.T) {
 			want, err := cjk.Embedded.Face(tc.families[0], tc.weight)
 			if err != nil {
 				t.Fatal(err)
+			}
+			weight := map[string]int{"Regular": 400, "Bold": 700}[tc.weight]
+			if len(tc.webFaces) != 1 || tc.webFaces[0] != (cjk.WebFace{Family: tc.families[0], File: "GlossCJKSC-" + tc.weight + ".otf", Weight: weight, Style: "normal"}) {
+				t.Fatalf("web faces %+v", tc.webFaces)
+			}
+			if served, err := fs.ReadFile(tc.files, tc.webFaces[0].File); err != nil || !bytes.Equal(served, want) {
+				t.Fatal("Files bytes differ from Face", err)
 			}
 			for _, variant := range []string{"Regular", "Italic", "Bold", "BoldItalic"} {
 				data, err := tc.source.Face(tc.families[0], variant)

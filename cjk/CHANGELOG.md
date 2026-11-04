@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add `Files()` and `WebFaces()` to `cjk`, `scregular` and `scbold` so hosts
+  can serve the SC faces to a browser terminal through the same path as the
+  script packs (`nimbleterminal.dev/ntfonts/packs`).
+
 ## v0.1.0 - 2026-10-29
 
 - Initial release of the independent `nimbleterminal.dev/ntfonts/cjk` module.
