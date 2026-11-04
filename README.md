@@ -119,6 +119,32 @@ SC glyph shapes are intended for Simplified Chinese; future JP, TC and KR
 faces will use separate packages and family names. See [the CJK README](cjk/README.md)
 for per-package sizes, the Han list and wasm cost.
 
+### Script and emoji packs
+
+Two further nested modules add scripts the core and CJK faces do not cover,
+following the same opt-in pattern. `nimbleterminal.dev/ntfonts/packs` holds
+seven packages, one per script, each embedding Noto Sans Regular and Bold
+subsets with every OpenType layout feature retained so Arabic joining, Indic
+reordering and mark positioning shape correctly: `arabic`, `hebrew`,
+`devanagari`, `bengali`, `tamil`, `thai` and `khmer` (1,068,724 bytes in all;
+the `packs` package serves all seven). `nimbleterminal.dev/ntfonts/packs/emoji`
+embeds Noto Color Emoji unmodified as a CBDT bitmap font (10,673,480 bytes).
+
+```sh
+go get nimbleterminal.dev/ntfonts/packs/arabic
+go get nimbleterminal.dev/ntfonts/packs/emoji
+```
+
+Family names are the upstream names (`Noto Sans Arabic` ... `Noto Sans Khmer`,
+`Noto Color Emoji`), so the same string selects the same face in nttypeset and
+in a browser. Every pack, and now `cjk`, also exposes `Files()` and
+`WebFaces()`: an `fs.FS` of the font files plus descriptors matching
+ntwebterm's `fontFaces` option, so a booba host can serve identical bytes to its
+browser terminal. See [the packs README](packs/README.md) and
+[the emoji README](packs/emoji/README.md) for sizes, coverage, the Safari CBDT
+caveat and regeneration. Automated checks do not establish visual quality; the
+specimen viewer catalogs these faces for coverage, not shaping.
+
 ### Go reference fonts
 
 `Go-*.ttf` and `GoMono-*.ttf` are unmodified TTF bytes from
@@ -152,7 +178,9 @@ Source code is MIT; see [LICENSE](./LICENSE). The fonts are OFL-1.1; see
 Run `task specimen`, then open <http://127.0.0.1:8088>. Stop with Ctrl-C.
 Use `task specimen -- -addr 127.0.0.1:8090` to choose another port.
 The viewer has family/variant and size controls, editable text, multilingual
-samples, and side-by-side comparisons with symbol and SC CJK fallbacks.
+samples, and side-by-side comparisons with symbol, SC CJK and script/emoji
+pack fallbacks. Pack faces are rendered one code point at a time: a coverage
+check, not a shaping check.
 It reads each font's cmap and marks missing characters explicitly, preventing
 browser system-font fallback from disguising missing coverage. Hover a glyph
 for its source face or missing codepoint. Browser shaping is not nttypeset layout.

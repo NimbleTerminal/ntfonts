@@ -1,8 +1,9 @@
 # Development
 
 Use Go 1.27.3 for development and CI (the module minimum is Go 1.26). The root
-module and optional `cjk/` nested module have no dependencies.
-The root `task ci` also runs the CJK module gate. Installed QA tools live in
+module and the optional nested modules `cjk/`, `packs/` and `packs/emoji/` have
+no dependencies. The root `task ci` also runs the three nested module gates
+(`cjk-ci`, `packs-ci`, `emoji-ci`). Installed QA tools live in
 `.task/bin/` and generated output in
 `bin/` and `dist/`; all are ignored.
 
@@ -53,7 +54,16 @@ commit as the text faces. After regenerating, run `task fonts-check` and `task c
 update CHANGELOG.md, and review the diff of `subsets.sha256`. The recipe is
 described in the Fonts section of README.md.
 
-Run `task notices` and `task --dir cjk notices` after font or license changes,
+Build the script packs with `--packs` (uses `packs/sources.json`, writes
+`NotoSans<Script>-{Regular,Bold}.ttf` under `packs/<script>/`, the OFL texts
+under `packs/internal/notice/`, `packs/coverage.json` and `packs/subsets.sha256`,
+retaining every layout feature) and the emoji module with `--emoji` (copies the
+hash-verified CBDT `NotoColorEmoji.ttf` from googlefonts/noto-emoji v2.051 into
+`packs/emoji/` unmodified). The three modes are mutually exclusive; text mode
+output must stay byte-identical when the script changes.
+
+Run `task notices`, `task --dir cjk notices`, `task --dir packs notices` and
+`task --dir packs/emoji notices` after font or license changes,
 then review and commit
 THIRD_PARTY_NOTICES.md. `task notices-check` enforces that generated text in CI.
 
@@ -69,8 +79,9 @@ replacements. Update CHANGELOG.md, run `task ci`, and review font licenses. Then
 commit the release preparation, tag the intended version, wait for tag CI to
 pass, and publish the GitHub release with its changelog.
 
-Release the optional module with `cjk/vX.Y.Z` tags and configure its vanity
-import path separately. Parent tags do not release the nested module.
+Release the optional modules with `cjk/vX.Y.Z`, `packs/vX.Y.Z` and
+`packs/emoji/vX.Y.Z` tags. Parent tags do not release the nested modules, and
+the vanity redirect for the first path segment covers them all.
 
 ## Specimen viewer
 
@@ -82,8 +93,10 @@ It reads each font's cmap and marks missing characters explicitly, preventing
 browser system-font fallback from disguising missing coverage. Hover a glyph
 for its source face or missing codepoint. Browser shaping is not nttypeset layout.
 
-Core fonts come from `Embedded`; optional CJK files are read from the checkout
-without adding a module dependency. Only selected faces are loaded by the
+Core fonts come from `Embedded`; optional CJK, script pack and emoji files are
+read from the checkout without adding a module dependency. Pack faces are
+rendered one code point at a time, so the viewer checks their coverage, not
+their shaping. Only selected faces are loaded by the
 browser. All assets stay local. The viewer is a development tool; it does not
 change the library API or embed CJK in the core library.
 

@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- Add the optional `nimbleterminal.dev/ntfonts/packs` module: seven Noto Sans
+  script packages (Arabic, Hebrew, Devanagari, Bengali, Tamil, Thai, Khmer)
+  with every layout feature retained, a combined `packs` source, and
+  `Files()`/`WebFaces()` for serving the same bytes to browser terminals.
+- Add the optional `nimbleterminal.dev/ntfonts/packs/emoji` module embedding
+  Noto Color Emoji (CBDT) unmodified.
+- `scripts/subset-fonts.py` gains `--packs` and `--emoji` modes; text and CJK
+  output are unchanged.
+- The specimen viewer catalogs pack faces found in the checkout (coverage, not
+  shaping). Root `task ci` runs the `packs` and `emoji` gates; Pages deploys on
+  `packs/v*` and `packs/emoji/v*` tags.
+
 - Update QA tools to golangci-lint v2.15.0 and govulncheck v1.9.0 for both modules.
   Refresh cached golangci-lint binaries when the pinned version changes.
 
