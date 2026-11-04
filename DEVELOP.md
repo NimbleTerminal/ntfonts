@@ -10,7 +10,7 @@ The root `task ci` also runs the CJK module gate. Installed QA tools live in
 task ci                  # same gate as GitHub Actions; includes network scans
 task test                # tests
 task test-race           # tests under the race detector
-task lint                # golangci-lint v2.14.0, installed into .task/bin
+task lint                # golangci-lint v2.15.0, installed into .task/bin
 task fonts-check         # shasum -a 256 -c subsets.sha256 (sha256sum as a fallback)
 task cross-windows       # check Windows compilation
 task cross-wasm          # check js/wasm compilation
@@ -22,7 +22,7 @@ Install [Go Task](https://taskfile.dev) and a C compiler for the race detector.
 `task --list-all` lists maintenance tasks. CI runs on Linux and macOS. Tasks
 explicitly use `GOWORK=off`.
 
-`task vulncheck` installs govulncheck v1.8.0 into `.task/bin` and scans the
+`task vulncheck` installs govulncheck v1.9.0 into `.task/bin` and scans the
 module. It requires network access to the Go vulnerability database; failures
 stop CI.
 

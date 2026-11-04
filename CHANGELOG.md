@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Update QA tools to golangci-lint v2.15.0 and govulncheck v1.9.0 for both modules.
+  Refresh cached golangci-lint binaries when the pinned version changes.
+
 ## v0.2.1 - 2026-10-31
 
 - Add `Source.Fallbacks()` so renderers can discover symbol fallback families
