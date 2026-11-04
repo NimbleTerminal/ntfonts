@@ -103,8 +103,8 @@ change the library API or embed CJK in the core library.
 ## GitHub Pages
 
 `.github/workflows/pages.yml` runs the full CI gate, exports the specimen, and
-deploys it on pushes to `main`, core version tags (`v*`), and CJK version tags
-(`cjk/v*`). It also supports manual runs. All triggers update the same Pages
+deploys it on pushes to `main`, core version tags (`v*`), CJK version tags
+(`cjk/v*`), and pack version tags (`packs/v*`, `packs/emoji/v*`). It also supports manual runs. All triggers update the same Pages
 site; the most recent successful deployment replaces it (no per-tag archive).
 
 Repository setup: select **Settings → Pages → Build and deployment → Source →

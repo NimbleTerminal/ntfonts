@@ -28,7 +28,8 @@ font, err := arabic.Embedded.Face(arabic.Fallbacks()[0], "Regular")
 | `nimbleterminal.dev/ntfonts/packs` | all seven | 1,068,724 |
 
 One module zip contains every script face; a per-script import saves linked
-binary size, not module download size. These sizes are raw font payloads added
+binary size, not module download size. A test caps the module's embedded total
+at 1,400,000 bytes. These sizes are raw font payloads added
 to native or js/wasm binaries, before compression and other code/data overhead.
 
 Every package exposes the same surface: `Embedded`, `Source`, `Fallbacks()`,
@@ -71,9 +72,9 @@ font list. `coverage.json` records the covered characters per face.
 Unlike the core text subsets, pack subsets retain every OpenType layout
 feature: Arabic needs `init`, `medi`, `fina` and `rlig`; the Indic scripts need
 `akhn`, `rphf`, `blwf`, `half`, `pres`, `abvs`, `blws`, `psts`, `cjct` and
-their mark positioning in `abvm`/`blwm`; Thai and Khmer need `mark`/`mkmk` and
-the Universal Shaping Engine features. Tests assert the tags each face
-carries. nttypeset disables `liga`, `clig`, `dlig` and `calt` at runtime, so in
+their mark positioning in `abvm`/`blwm`; Thai needs `mark`/`mkmk`; Khmer
+positions marks with `abvm`/`blwm` and uses the Universal Shaping Engine
+features. Tests assert the tags each face carries. nttypeset disables `liga`, `clig`, `dlig` and `calt` at runtime, so in
 Go the guarantee covers joining, reordering and mark positioning rather than
 `calt`-dependent forms; browsers apply everything.
 

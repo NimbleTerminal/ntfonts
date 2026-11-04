@@ -4,7 +4,8 @@
 Go module that embeds Noto Color Emoji unmodified. Neither ntfonts nor the
 `packs` module imports it, and both exclude this directory from their module
 zips. Importing it adds 10,673,480 raw font bytes to a native or js/wasm
-binary, before compression and other code/data overhead. Nothing is discovered
+binary, before compression and other code/data overhead; a test caps the file
+at 12,000,000 bytes. Nothing is discovered
 or downloaded at runtime.
 
 ```sh
