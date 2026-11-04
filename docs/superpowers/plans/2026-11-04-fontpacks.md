@@ -15,7 +15,7 @@
 - Every module is standard-library only; `go.mod` has no `require`. Never import nttypeset, even in tests.
 - Never edit a font file by hand. Fonts change only through `scripts/subset-fonts.py`; the script regenerates each module's `subsets.sha256`.
 - Text-mode and `--cjk` output must stay byte-identical: root `subsets.sha256`, `coverage.json` and `cjk/subsets.sha256` show no diff after running the extended script.
-- Script sources pinned to google/fonts commit `bd8f81ddb5c74d5c8897b36ad88b440266245103`. Emoji pinned to googlefonts/noto-emoji tag `v2.051`, commit `6202fe7c20dd5e1727a4c3c01604edc176c576da`.
+- Script sources pinned to google/fonts commit `bd8f81ddb5c74d5c8897b36ad88b440266245103`. Emoji pinned to googlefonts/noto-emoji tag `v2.051`, commit `8998f5dd683424a73e2314a8c1f1e359c19e8742`.
 - Family names are API: `Noto Sans Arabic`, `Noto Sans Hebrew`, `Noto Sans Devanagari`, `Noto Sans Bengali`, `Noto Sans Tamil`, `Noto Sans Thai`, `Noto Sans Khmer`, `Noto Color Emoji`. Variants: `Regular`, `Bold`, `Italic`, `BoldItalic`; Italic aliases Regular, BoldItalic aliases Bold.
 - Files on disk, in `//go:embed`, in `subsets.sha256` and in `Files()` use public names (`NotoSansArabic-Regular.ttf`). Only the font name table says `Gloss Arabic`.
 - Error prefixes: `packs:` in the packs module, `emoji:` in the emoji module, `cjk:` in cjk. Errors name the offending family or variant with `%q`.
@@ -64,8 +64,8 @@ Compute each `sha256` by downloading with `curl -sL` into a fresh scratchpad dir
 - [ ] **Step 3: Write `packs/emoji/sources.json`**
 
 Two entries:
-- `file`: `NotoColorEmoji.ttf`, `url`: `https://raw.githubusercontent.com/googlefonts/noto-emoji/6202fe7c20dd5e1727a4c3c01604edc176c576da/fonts/NotoColorEmoji.ttf` (expected 10,673,480 bytes)
-- `file`: `notocoloremoji-OFL.txt`, `url`: `https://raw.githubusercontent.com/googlefonts/noto-emoji/6202fe7c20dd5e1727a4c3c01604edc176c576da/fonts/LICENSE`
+- `file`: `NotoColorEmoji.ttf`, `url`: `https://raw.githubusercontent.com/googlefonts/noto-emoji/8998f5dd683424a73e2314a8c1f1e359c19e8742/fonts/NotoColorEmoji.ttf` (expected 10,673,480 bytes)
+- `file`: `notocoloremoji-OFL.txt`, `url`: `https://raw.githubusercontent.com/googlefonts/noto-emoji/8998f5dd683424a73e2314a8c1f1e359c19e8742/fonts/LICENSE`
 
 - [ ] **Step 4: Extend the script**
 

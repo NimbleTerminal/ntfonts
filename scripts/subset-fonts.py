@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Build pinned font subsets. Requires fonttools==4.60.2; never used at runtime.
-Usage: python scripts/subset-fonts.py CACHE [--download]
+Usage: python scripts/subset-fonts.py CACHE [--download] [--cjk | --packs | --emoji]
 The download step verifies sources.json hashes before instancing/subsetting.
 """
-import argparse, hashlib, json, urllib.request, zipfile, tempfile
+import argparse, hashlib, json, shutil, urllib.request, zipfile, tempfile
 from fontTools.merge import Merger
 from pathlib import Path
 from fontTools import subset
@@ -15,11 +15,14 @@ assert fontTools.__version__ == '4.60.2', 'install fonttools==4.60.2'
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('cache',type=Path)
 parser.add_argument('--download',action='store_true')
-parser.add_argument('--cjk',action='store_true',help='build only the optional CJK module')
+mode=parser.add_mutually_exclusive_group()
+mode.add_argument('--cjk',action='store_true',help='build only the optional CJK module')
+mode.add_argument('--packs',action='store_true',help='build only the optional script packs module')
+mode.add_argument('--emoji',action='store_true',help='copy only the optional emoji module font')
 args=parser.parse_args()
 root=Path(__file__).resolve().parents[1]
 args.cache.mkdir(parents=True,exist_ok=True)
-output=root/'cjk' if args.cjk else root
+output=root/'cjk' if args.cjk else root/'packs' if args.packs else root/'packs'/'emoji' if args.emoji else root
 for source in json.loads((output/'sources.json').read_text()):
  path=args.cache/source['file']
  if not path.exists() and args.download:
@@ -36,15 +39,36 @@ def points(ranges):
 unicodes=points([(0x20,0x7e),(0xa0,0x24f),(0x2b0,0x52f),(0x1e00,0x1eff),
  (0x2000,0x206f),(0x20a0,0x20cf),(0x2100,0x22ff),(0x2500,0x25ff)])|{0x2713,0x2714,0x2717,0x2718,0xfffd}
 symbols=points([(0x2190,0x22ff),(0x2500,0x27bf)])|{0x20,0xfffd}
+# Text subsets keep composition, positioning and kerning only; nttypeset
+# disables ligatures at runtime. Script packs keep every layout feature
+# because Arabic joining and Indic reordering live in GSUB/GPOS.
+TEXT_FEATURES=['ccmp','locl','mark','mkmk','kern']
+PACKS=[('arabic','Arabic',[(0x600,0x6ff),(0x750,0x77f),(0x8a0,0x8ff),(0xfb50,0xfdff),(0xfe70,0xfeff)]),
+ ('hebrew','Hebrew',[(0x590,0x5ff),(0xfb1d,0xfb4f)]),
+ ('devanagari','Devanagari',[(0x900,0x97f),(0x1cd0,0x1cff),(0xa8e0,0xa8ff)]),
+ ('bengali','Bengali',[(0x980,0x9ff)]),
+ ('tamil','Tamil',[(0xb80,0xbff),(0x11fc0,0x11fff)]),
+ ('thai','Thai',[(0xe00,0xe7f)]),
+ ('khmer','Khmer',[(0x1780,0x17ff),(0x19e0,0x19ff)])]
+# Space, no-break space, joiners, directional controls and the replacement
+# character stay in every pack face so shaping never falls out of it.
+CONTROLS={0x20,0xa0,0x200b,0x200c,0x200d,0x200e,0x200f,0x2066,0x2067,0x2068,0x2069,0xfffd}
 
 
-def save(font, codepoints, ident, variant, dest):
+def instance(font, weight, optical=None):
+ if 'fvar' not in font:return font
+ settings={a.axisTag:a.defaultValue for a in font['fvar'].axes};settings['wght']=weight
+ if optical is not None:settings['opsz']=optical
+ return instantiateVariableFont(font,settings,inplace=True)
+
+
+def save(font, codepoints, ident, variant, dest, features=TEXT_FEATURES, prefix='Gloss Text '):
  options=subset.Options();options.hinting=False
- options.layout_features=['ccmp','locl','mark','mkmk','kern']
+ options.layout_features=features
  options.name_IDs=['*'];options.name_legacy=True;options.name_languages=['*']
  sub=subset.Subsetter(options=options);sub.populate(unicodes=codepoints);sub.subset(font)
- familyname='Gloss Text '+ident
- names={1:familyname,2:variant,3:'GlossSubset-'+ident+'-'+variant,4:familyname+' '+variant,6:'GlossText'+ident+'-'+variant,16:familyname,17:variant,21:familyname,22:variant}
+ familyname=prefix+ident
+ names={1:familyname,2:variant,3:'GlossSubset-'+ident+'-'+variant,4:familyname+' '+variant,6:familyname.replace(' ','')+'-'+variant,16:familyname,17:variant,21:familyname,22:variant}
  for record in font['name'].names:
   if record.nameID in names:record.string=names[record.nameID].encode(record.getEncoding(),errors='replace')
  if 'CFF ' in font:
@@ -54,6 +78,10 @@ def save(font, codepoints, ident, variant, dest):
  font['head'].created=font['head'].modified=2082844800
  dest.parent.mkdir(parents=True,exist_ok=True)
  font.save(dest,reorderTables=True)
+ record_hash(dest)
+
+
+def record_hash(dest):
  name=dest.relative_to(output).as_posix() if dest.is_relative_to(output) else dest.name
  hashes[name]=hashlib.sha256(dest.read_bytes()).hexdigest()
 
@@ -66,6 +94,24 @@ if args.cjk:
  for variant in ['Regular','Bold']:
   font=TTFont(args.cache/('NotoSansCJKsc-'+variant+'.otf'),recalcTimestamp=False)
   save(font,codepoints,'CJKSC',variant,output/('sc'+variant.lower())/('GlossCJKSC-'+variant+'.otf'))
+elif args.packs:
+ coverage={}
+ for slug,script,ranges in PACKS:
+  codepoints=points(ranges)|CONTROLS
+  for variant,weight in [('Regular',400),('Bold',700)]:
+   font=TTFont(args.cache/('notosans'+slug+'-NotoSans'+script+'[wdth,wght].ttf'),recalcTimestamp=False)
+   font=instance(font,weight)
+   coverage[script+'/'+variant]=''.join(chr(cp) for cp in sorted(codepoints & set(font.getBestCmap())))
+   # Public file names: hosts serve these URLs; only the name table says Gloss.
+   save(font,codepoints,script,variant,output/slug/('NotoSans'+script+'-'+variant+'.ttf'),features=['*'],prefix='Gloss ')
+  notice=output/'internal'/'notice'/('notosans'+slug+'.OFL.txt');notice.parent.mkdir(parents=True,exist_ok=True)
+  shutil.copyfile(args.cache/('notosans'+slug+'-OFL.txt'),notice)
+ (output/'coverage.json').write_text(json.dumps(coverage,ensure_ascii=False,indent=2)+'\n')
+elif args.emoji:
+ # The CBDT font is embedded unmodified: no subsetting, no rename, no fontTools.
+ shutil.copyfile(args.cache/'NotoColorEmoji.ttf',output/'NotoColorEmoji.ttf')
+ shutil.copyfile(args.cache/'notocoloremoji-OFL.txt',output/'notocoloremoji.OFL.txt')
+ record_hash(output/'NotoColorEmoji.ttf')
 else:
  families=[('A','literata','Literata','opsz,wght',12),('B','newsreader','Newsreader','opsz,wght',16),('C','ibmplexsans','IBMPlexSans','wdth,wght',None),('D','sourceserif4','SourceSerif4','opsz,wght',16),('E','iosevka','Iosevka',None,None),('F','ibmplexmono','IBMPlexMono',None,None),('G','jetbrainsmono','JetBrainsMono','wght',None)]
  coverage={}
@@ -76,10 +122,7 @@ else:
    elif folder=='iosevka':name=family+'-'+variant+'.ttf'
    else:name=folder+'-'+family+'-'+variant+'.ttf'
    font=TTFont(args.cache/name,recalcTimestamp=False)
-   if 'fvar' in font:
-    settings={a.axisTag:a.defaultValue for a in font['fvar'].axes};settings['wght']=weight
-    if optical is not None:settings['opsz']=optical
-    font=instantiateVariableFont(font,settings,inplace=True)
+   font=instance(font,weight,optical)
    coverage[family+'/'+variant]=''.join(chr(cp) for cp in sorted(unicodes & set(font.getBestCmap())))
    save(font,unicodes,ident,variant,root/('Gloss'+ident+'-'+variant+'.ttf'))
  font=TTFont(args.cache/'NotoSansSymbols2-Regular.ttf',recalcTimestamp=False)
