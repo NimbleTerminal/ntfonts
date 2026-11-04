@@ -87,6 +87,11 @@ Parent tags do not release the nested modules on their own, and the vanity
 redirect for the first path segment covers them all. Nested modules have no
 `require` on each other, so no go.mod edits are needed to bump.
 
+GitHub creates no workflow runs when more than three tags are pushed in one
+`git push`, so push the four release tags in two pushes (or one at a time), or
+dispatch `ci.yml` on each tag afterwards with `gh workflow run ci.yml --ref <tag>`.
+The Pages site needs no tag run when the same commit was already deployed from `main`.
+
 ## Specimen viewer
 
 Run `task specimen`, then open <http://127.0.0.1:8088>. Stop with Ctrl-C.
