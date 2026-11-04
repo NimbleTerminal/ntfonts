@@ -130,9 +130,13 @@ tasks:
       - task: notices-check
       - task: vulncheck
       - task: cjk-ci
+      - task: packs-ci
   cjk-ci:
     desc: Run the optional CJK module gate including leaf link-isolation tests
     cmds: ['task --dir cjk ci']
+  packs-ci:
+    desc: Run the script packs module gate including link-isolation tests
+    cmds: ['task --dir packs ci']
   clean:
     desc: Remove generated binaries and task tools
     cmds: ['rm -rf bin dist .task']

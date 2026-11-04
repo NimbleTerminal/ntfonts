@@ -2,7 +2,7 @@ name: Specimen Pages
 on:
   push:
     branches: [main]
-    tags: ['v*', 'cjk/v*']
+    tags: ['v*', 'cjk/v*', 'packs/v*', 'packs/emoji/v*']
   workflow_dispatch:
 
 permissions:
