@@ -30,6 +30,17 @@ type face struct {
 	data    []byte
 }
 
+// packs lists the optional script packs the viewer looks for in the checkout.
+var packs = []struct{ slug, script, family string }{
+	{"arabic", "Arabic", "Noto Sans Arabic"},
+	{"hebrew", "Hebrew", "Noto Sans Hebrew"},
+	{"devanagari", "Devanagari", "Noto Sans Devanagari"},
+	{"bengali", "Bengali", "Noto Sans Bengali"},
+	{"tamil", "Tamil", "Noto Sans Tamil"},
+	{"thai", "Thai", "Noto Sans Thai"},
+	{"khmer", "Khmer", "Noto Sans Khmer"},
+}
+
 func siteFiles(root string) (map[string][]byte, error) {
 	var faces []face
 	variants := []string{"Regular", "Bold", "Italic", "BoldItalic"}
@@ -59,6 +70,34 @@ func siteFiles(root string) (map[string][]byte, error) {
 			return nil, err
 		}
 		faces = append(faces, face{Family: "Noto Sans CJK SC", Variant: variant, Group: "cjk", Bytes: len(data), data: data})
+	}
+	// Read optional script and emoji packs from the checkout the same way.
+	// The viewer renders one code point at a time: this is a coverage catalog,
+	// not a shaping check.
+	var packNotices []string
+	for _, p := range packs {
+		found := false
+		for _, variant := range variants[:2] {
+			name := filepath.Join(root, "packs", p.slug, "NotoSans"+p.script+"-"+variant+".ttf")
+			data, err := os.ReadFile(name)
+			if os.IsNotExist(err) {
+				continue
+			}
+			if err != nil {
+				return nil, err
+			}
+			found = true
+			faces = append(faces, face{Family: p.family, Variant: variant, Group: "packs", Bytes: len(data), data: data})
+		}
+		if found {
+			packNotices = append(packNotices, filepath.Join(root, "packs", "internal", "notice", "notosans"+p.slug+".OFL.txt"))
+		}
+	}
+	if data, err := os.ReadFile(filepath.Join(root, "packs", "emoji", "NotoColorEmoji.ttf")); err == nil {
+		faces = append(faces, face{Family: "Noto Color Emoji", Variant: "Regular", Group: "packs", Bytes: len(data), data: data})
+		packNotices = append(packNotices, filepath.Join(root, "packs", "emoji", "notocoloremoji.OFL.txt"))
+	} else if !os.IsNotExist(err) {
+		return nil, err
 	}
 
 	files := make(map[string][]byte)
@@ -95,6 +134,13 @@ func siteFiles(root string) (map[string][]byte, error) {
 		}
 		fmt.Fprintf(&licenses, "Noto Sans CJK SC\n\n%s\n", license)
 		break
+	}
+	for _, name := range packNotices {
+		license, err := os.ReadFile(name)
+		if err != nil {
+			return nil, fmt.Errorf("pack license: %w", err)
+		}
+		fmt.Fprintf(&licenses, "%s\n\n%s\n", filepath.Base(name), license)
 	}
 	files["licenses.txt"] = []byte(licenses.String())
 	files[".nojekyll"] = []byte{}

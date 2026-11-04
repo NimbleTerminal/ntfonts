@@ -38,12 +38,13 @@ SOFTWARE.
 <label>Size <output id="sizeValue">30 px</output><input id="size" type="range" min="14" max="64" value="30"></label>
 <label class="check"><input id="symbols" type="checkbox" checked> Symbol fallback</label>
 <label class="check"><input id="cjk" type="checkbox"> SC CJK fallback</label>
+<label class="check"><input id="packs" type="checkbox"> Script and emoji packs</label>
 </div>
 <div id="status" class="meta" role="status" aria-live="polite">Loading font catalog…</div>
 <p class="legend"><span class="swatch"></span>Fallback glyph <span class="missing">□</span> Missing glyph (hover for its codepoint). Missing characters are replaced explicitly, so system fonts cannot hide coverage gaps.</p>
 <section class="section"><h2>Your text</h2><label for="custom">Type or paste a sample</label><textarea id="custom" spellcheck="false">The quick brown fox jumps over the lazy dog. Café, ř ł ş ő ơ ạ — α ж → ✓ 漢字。</textarea><div id="customPreview" class="columns" style="margin-top:16px"></div></section>
 <section class="section"><h2>Script &amp; symbol specimens</h2><div id="specimens"></div></section>
-<footer>Browser shaping is a visual aid, not a reproduction of nttypeset layout. Discretionary ligatures and synthetic bold/italic are disabled. Symbols use upright Regular; SC italic variants use upright weights. SC uses Simplified Chinese glyph shapes even when showing kana or Hangul. <a href="licenses.txt">Font licenses</a>.</footer>
+<footer>Browser shaping is a visual aid, not a reproduction of nttypeset layout. Discretionary ligatures and synthetic bold/italic are disabled. Symbols use upright Regular; SC italic variants use upright weights. SC uses Simplified Chinese glyph shapes even when showing kana or Hangul. Pack faces are rendered one code point at a time: this checks coverage, not shaping. <a href="licenses.txt">Font licenses</a>.</footer>
 </main>
 <script>
 'use strict';
@@ -116,6 +117,7 @@ async function render(){
   const variant=$('variant').value,selected=pick($('family').value,variant),requested=[selected];
   if($('symbols').checked)requested.push(pick('Noto Sans Symbols 2',variant));
   if($('cjk').checked)requested.push(pick('Noto Sans CJK SC',variant));
+  if($('packs').checked)for(const family of [...new Set(catalog.filter(f=>f.group==='packs').map(f=>f.family))])requested.push(pick(family,variant));
   const fonts=await Promise.all([...new Set(requested.filter(Boolean))].map(load));
   if(current!==generation)return;
   const primary=fonts[0];
@@ -131,7 +133,8 @@ async function init(){
   for(const family of [...new Set(catalog.map(f=>f.family))]){const option=document.createElement('option');option.value=option.textContent=family;$('family').append(option)}
   $('family').value='Literata';
   if(!catalog.some(f=>f.group==='cjk')){$('cjk').disabled=true;$('cjk').parentElement.title='Optional CJK assets were not found in this checkout'}
-  for(const id of ['family','variant','symbols','cjk'])$(id).addEventListener('change',render);
+  if(!catalog.some(f=>f.group==='packs')){$('packs').disabled=true;$('packs').parentElement.title='Optional script and emoji packs were not found in this checkout'}
+  for(const id of ['family','variant','symbols','cjk','packs'])$(id).addEventListener('change',render);
   $('custom').addEventListener('input',render);
   $('size').addEventListener('input',()=>{document.documentElement.style.setProperty('--size',$('size').value+'px');$('sizeValue').value=$('size').value+' px'});
   await render();

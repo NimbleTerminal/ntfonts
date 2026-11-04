@@ -25,6 +25,22 @@ func TestViewer(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, "cjk", "internal", "notice", "notosanscjksc.OFL.txt"), []byte("test CJK license"), 0644); err != nil {
 		t.Fatal(err)
 	}
+	// Optional packs: one script face and the emoji font, with their notices.
+	fakes := map[string]string{
+		"packs/arabic/NotoSansArabic-Regular.ttf":      "fake arabic",
+		"packs/internal/notice/notosansarabic.OFL.txt": "test arabic license",
+		"packs/emoji/NotoColorEmoji.ttf":               "fake emoji",
+		"packs/emoji/notocoloremoji.OFL.txt":           "test emoji license",
+	}
+	for name, content := range fakes {
+		path := filepath.Join(root, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
 	handler, err := viewer(root)
 	if err != nil {
 		t.Fatal(err)
@@ -39,9 +55,10 @@ func TestViewer(t *testing.T) {
 	if err := json.Unmarshal(w.Body.Bytes(), &fonts); err != nil {
 		t.Fatal(err)
 	}
-	if len(fonts) != 30 {
+	if len(fonts) != 32 {
 		t.Fatalf("got %d faces", len(fonts))
 	}
+	packFaces := map[string]string{"Noto Sans Arabic": "fake arabic", "Noto Color Emoji": "fake emoji"}
 	for _, font := range fonts {
 		result := request("/" + font.URL)
 		if result.Code != 200 || result.Body.Len() != font.Bytes {
@@ -49,6 +66,21 @@ func TestViewer(t *testing.T) {
 		}
 		if font.Group == "cjk" && result.Body.String() != "optional font" {
 			t.Fatal("CJK must come from checkout")
+		}
+		if font.Group == "packs" {
+			if want, ok := packFaces[font.Family]; !ok || result.Body.String() != want || !strings.HasSuffix(font.URL, ".ttf") {
+				t.Fatalf("pack face must come from checkout: %+v", font)
+			}
+			delete(packFaces, font.Family)
+		}
+	}
+	if len(packFaces) != 0 {
+		t.Fatalf("pack faces not catalogued: %v", packFaces)
+	}
+	licenses := request("/licenses.txt").Body.String()
+	for _, want := range []string{"test CJK license", "test arabic license", "test emoji license"} {
+		if !strings.Contains(licenses, want) {
+			t.Fatalf("licenses.txt lacks %q", want)
 		}
 	}
 	for _, path := range []string{"/sources.json", "/cjk/go.mod", "/fonts/999", "/index.html"} {
