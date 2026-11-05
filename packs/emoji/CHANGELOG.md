@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- `WebFace` gains `Tech`, the CSS `font-tech()` keyword (`color-CBDT`), so a
+  page can pick between this file and the sbix companion module with
+  `CSS.supports` instead of user-agent sniffing.
+- Point to `nimbleterminal.dev/ntfonts/packs/emoji/sbix` for Safari.
+
 ## v0.3.0 - 2026-11-04
 
 - Initial `nimbleterminal.dev/ntfonts/packs/emoji` module embedding Noto Color

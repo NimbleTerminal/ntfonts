@@ -82,7 +82,7 @@ func TestCorpusCoverage(t *testing.T) {
 }
 
 func TestFilesAndWebFaces(t *testing.T) {
-	want := []emoji.WebFace{{Family: family, File: "NotoColorEmoji.ttf", Weight: 400, Style: "normal"}}
+	want := []emoji.WebFace{{Family: family, File: "NotoColorEmoji.ttf", Weight: 400, Style: "normal", Tech: "color-CBDT"}}
 	got := emoji.WebFaces()
 	if !slices.Equal(got, want) {
 		t.Fatalf("%+v", got)

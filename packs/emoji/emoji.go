@@ -1,8 +1,10 @@
 // Package emoji embeds Noto Color Emoji unmodified: the CBDT/CBLC bitmap
 // color build from googlefonts/noto-emoji v2.051, which nttypeset can
 // rasterize (it draws bitmap glyphs, not COLR or SVG). Chrome and Firefox
-// render CBDT in the browser; Safari substitutes the platform emoji font.
-// All four variants serve the same file.
+// render CBDT in the browser; Safari does not, and the companion module
+// nimbleterminal.dev/ntfonts/packs/emoji/sbix serves the same artwork in the
+// sbix format it accepts. WebFace.Tech names the format for feature
+// detection. All four variants serve the same file.
 package emoji
 
 import (
@@ -50,16 +52,20 @@ func Files() fs.FS { return files }
 
 // WebFace describes the embedded file for a browser FontFace, mirroring the
 // fields of ntwebterm's fontFaces option. File is a path inside Files().
+// Tech is the CSS font-tech() keyword the browser must support to render the
+// file; test it with CSS.supports("font-tech(" + Tech + ")") or declare it
+// with tech() in a @font-face src list.
 type WebFace struct {
 	Family string
 	File   string
 	Weight int
 	Style  string
+	Tech   string
 }
 
 // WebFaces returns a fresh descriptor for the single embedded file.
 func WebFaces() []WebFace {
-	return []WebFace{{Family: family, File: "NotoColorEmoji.ttf", Weight: 400, Style: "normal"}}
+	return []WebFace{{Family: family, File: "NotoColorEmoji.ttf", Weight: 400, Style: "normal", Tech: "color-CBDT"}}
 }
 
 // License is the license text shipped for a family.
