@@ -27,7 +27,10 @@ type face struct {
 	Group   string `json:"group"`
 	URL     string `json:"url"`
 	Bytes   int    `json:"bytes"`
-	data    []byte
+	// Tech is the CSS font-tech() keyword a color font needs; the page skips
+	// faces whose tech the browser does not report supporting.
+	Tech string `json:"tech,omitempty"`
+	data []byte
 }
 
 // packs lists the optional script packs the viewer looks for in the checkout.
@@ -93,11 +96,25 @@ func siteFiles(root string) (map[string][]byte, error) {
 			packNotices = append(packNotices, filepath.Join(root, "packs", "internal", "notice", "notosans"+p.slug+".OFL.txt"))
 		}
 	}
-	if data, err := os.ReadFile(filepath.Join(root, "packs", "emoji", "NotoColorEmoji.ttf")); err == nil {
-		faces = append(faces, face{Family: "Noto Color Emoji", Variant: "Regular", Group: "packs", Bytes: len(data), data: data})
-		packNotices = append(packNotices, filepath.Join(root, "packs", "emoji", "notocoloremoji.OFL.txt"))
-	} else if !os.IsNotExist(err) {
-		return nil, err
+	// Two files share the emoji family: the unmodified CBDT build first, then
+	// its sbix conversion for WebKit. One notice covers both.
+	emojiNotice := false
+	for _, e := range []struct{ file, tech string }{
+		{filepath.Join("packs", "emoji", "NotoColorEmoji.ttf"), "color-CBDT"},
+		{filepath.Join("packs", "emoji", "sbix", "NotoColorEmoji-sbix.ttf"), "color-sbix"},
+	} {
+		data, err := os.ReadFile(filepath.Join(root, e.file))
+		if os.IsNotExist(err) {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		faces = append(faces, face{Family: "Noto Color Emoji", Variant: "Regular", Group: "packs", Bytes: len(data), Tech: e.tech, data: data})
+		if !emojiNotice {
+			packNotices = append(packNotices, filepath.Join(root, filepath.Dir(e.file), "notocoloremoji.OFL.txt"))
+			emojiNotice = true
+		}
 	}
 
 	files := make(map[string][]byte)

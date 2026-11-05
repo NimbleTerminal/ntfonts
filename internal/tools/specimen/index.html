@@ -44,7 +44,7 @@ SOFTWARE.
 <p class="legend"><span class="swatch"></span>Fallback glyph <span class="missing">□</span> Missing glyph (hover for its codepoint). Missing characters are replaced explicitly, so system fonts cannot hide coverage gaps.</p>
 <section class="section"><h2>Your text</h2><label for="custom">Type or paste a sample</label><textarea id="custom" spellcheck="false">The quick brown fox jumps over the lazy dog. Café, ř ł ş ő ơ ạ — α ж → ✓ 漢字。</textarea><div id="customPreview" class="columns" style="margin-top:16px"></div></section>
 <section class="section"><h2>Script &amp; symbol specimens</h2><div id="specimens"></div></section>
-<footer>Browser shaping is a visual aid, not a reproduction of nttypeset layout. Discretionary ligatures and synthetic bold/italic are disabled. Symbols use upright Regular; SC italic variants use upright weights. SC uses Simplified Chinese glyph shapes even when showing kana or Hangul. Pack faces are rendered one code point at a time: this checks coverage, not shaping. <a href="licenses.txt">Font licenses</a>.</footer>
+<footer>Browser shaping is a visual aid, not a reproduction of nttypeset layout. Discretionary ligatures and synthetic bold/italic are disabled. Symbols use upright Regular; SC italic variants use upright weights. SC uses Simplified Chinese glyph shapes even when showing kana or Hangul. Pack faces are rendered one code point at a time: this checks coverage, not shaping. Color emoji loads the first file whose format this browser reports supporting (<code>CSS.supports("font-tech(…)")</code>): CBDT in Chrome and Firefox, sbix in Safari. <a href="licenses.txt">Font licenses</a>.</footer>
 </main>
 <script>
 'use strict';
@@ -94,9 +94,15 @@ async function load(face){
  })().catch(error=>{cache.delete(face.url);throw error}));
  return cache.get(face.url);
 }
+// Color fonts name the font-tech() they need. Only trust CSS.supports when the
+// browser understands font-tech queries at all; otherwise try the first file.
+const techQuery=globalThis.CSS&&typeof CSS.supports==='function'&&CSS.supports('font-tech(variations)');
+function usable(f){return !f.tech||!techQuery||CSS.supports('font-tech('+f.tech+')')}
 function pick(family,variant){
- return catalog.find(f=>f.family===family&&f.variant===variant)||catalog.find(f=>f.family===family&&f.variant===(variant.includes('Bold')?'Bold':'Regular'))||catalog.find(f=>f.family===family&&f.variant==='Regular');
+ const faces=catalog.filter(f=>f.family===family&&usable(f));
+ return faces.find(f=>f.variant===variant)||faces.find(f=>f.variant===(variant.includes('Bold')?'Bold':'Regular'))||faces.find(f=>f.variant==='Regular');
 }
+function unsupported(){return [...new Set(catalog.filter(f=>f.tech).map(f=>f.family))].filter(family=>!catalog.some(f=>f.family===family&&usable(f)))}
 function panel(text,fonts,title){
  const box=document.createElement('div');box.className='panel';
  const h=document.createElement('h3');h.textContent=title;box.append(h);
@@ -118,10 +124,11 @@ async function render(){
   if($('symbols').checked)requested.push(pick('Noto Sans Symbols 2',variant));
   if($('cjk').checked)requested.push(pick('Noto Sans CJK SC',variant));
   if($('packs').checked)for(const family of [...new Set(catalog.filter(f=>f.group==='packs').map(f=>f.family))])requested.push(pick(family,variant));
+  if(!selected)throw Error(`${$('family').value}: no color format this browser reports supporting (${catalog.filter(f=>f.family===$('family').value).map(f=>f.tech).join(', ')}). The platform emoji font would render instead.`);
   const fonts=await Promise.all([...new Set(requested.filter(Boolean))].map(load));
   if(current!==generation)return;
-  const primary=fonts[0];
-  $('status').textContent=`${primary.family} · requested ${variant}, actual ${primary.variant} · ${primary.bytes.toLocaleString()} bytes. Active chain: ${fonts.map(f=>f.family).join(' → ')}`;
+  const primary=fonts[0],label=f=>f.tech?`${f.family} (${f.tech})`:f.family,skipped=$('packs').checked?unsupported():[];
+  $('status').textContent=`${label(primary)} · requested ${variant}, actual ${primary.variant} · ${primary.bytes.toLocaleString()} bytes. Active chain: ${fonts.map(label).join(' → ')}`+(skipped.length?`. ${skipped.join(', ')}: no color format this browser reports supporting; the platform emoji font renders instead.`:'');
   compare($('customPreview'),$('custom').value,primary,fonts);
   $('specimens').replaceChildren();
   for(const [title,text] of samples){const section=document.createElement('section');section.className='section';const h=document.createElement('h2');h.textContent=title;const grid=document.createElement('div');grid.className='columns';compare(grid,text,primary,fonts);section.append(h,grid);$('specimens').append(section)}

@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -31,6 +32,8 @@ func TestViewer(t *testing.T) {
 		"packs/internal/notice/notosansarabic.OFL.txt": "test arabic license",
 		"packs/emoji/NotoColorEmoji.ttf":               "fake emoji",
 		"packs/emoji/notocoloremoji.OFL.txt":           "test emoji license",
+		"packs/emoji/sbix/NotoColorEmoji-sbix.ttf":     "fake sbix",
+		"packs/emoji/sbix/notocoloremoji.OFL.txt":      "test emoji license",
 	}
 	for name, content := range fakes {
 		path := filepath.Join(root, filepath.FromSlash(name))
@@ -55,11 +58,17 @@ func TestViewer(t *testing.T) {
 	if err := json.Unmarshal(w.Body.Bytes(), &fonts); err != nil {
 		t.Fatal(err)
 	}
-	if len(fonts) != 32 {
+	if len(fonts) != 33 {
 		t.Fatalf("got %d faces", len(fonts))
 	}
-	packFaces := map[string]string{"Noto Sans Arabic": "fake arabic", "Noto Color Emoji": "fake emoji"}
+	// Both color emoji files share the family; tech tells them apart so the
+	// page can pick the format this browser supports. CBDT is listed first.
+	packFaces := map[string]string{"Noto Sans Arabic": "fake arabic", "Noto Color Emoji/color-CBDT": "fake emoji", "Noto Color Emoji/color-sbix": "fake sbix"}
 	for _, font := range fonts {
+		key := font.Family
+		if font.Tech != "" {
+			key += "/" + font.Tech
+		}
 		result := request("/" + font.URL)
 		if result.Code != 200 || result.Body.Len() != font.Bytes {
 			t.Fatalf("invalid font response: %+v", font)
@@ -68,20 +77,28 @@ func TestViewer(t *testing.T) {
 			t.Fatal("CJK must come from checkout")
 		}
 		if font.Group == "packs" {
-			if want, ok := packFaces[font.Family]; !ok || result.Body.String() != want || !strings.HasSuffix(font.URL, ".ttf") {
+			if want, ok := packFaces[key]; !ok || result.Body.String() != want || !strings.HasSuffix(font.URL, ".ttf") {
 				t.Fatalf("pack face must come from checkout: %+v", font)
 			}
-			delete(packFaces, font.Family)
+			delete(packFaces, key)
+		} else if font.Tech != "" {
+			t.Fatalf("tech on a non-pack face: %+v", font)
 		}
 	}
 	if len(packFaces) != 0 {
 		t.Fatalf("pack faces not catalogued: %v", packFaces)
+	}
+	if i, j := slices.IndexFunc(fonts, func(f face) bool { return f.Tech == "color-CBDT" }), slices.IndexFunc(fonts, func(f face) bool { return f.Tech == "color-sbix" }); i > j {
+		t.Fatal("CBDT must precede sbix so Chrome keeps the unmodified file")
 	}
 	licenses := request("/licenses.txt").Body.String()
 	for _, want := range []string{"test CJK license", "test arabic license", "test emoji license"} {
 		if !strings.Contains(licenses, want) {
 			t.Fatalf("licenses.txt lacks %q", want)
 		}
+	}
+	if strings.Count(licenses, "test emoji license") != 1 {
+		t.Fatal("the shared emoji notice must appear once")
 	}
 	for _, path := range []string{"/sources.json", "/cjk/go.mod", "/fonts/999", "/index.html"} {
 		if result := request(path); result.Code != 404 {
