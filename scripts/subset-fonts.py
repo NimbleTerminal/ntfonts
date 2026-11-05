@@ -116,7 +116,11 @@ elif args.emoji:
  # The sbix companion carries the same PNG strikes for WebKit, which rejects
  # CBDT. Chrome draws sbix only for glyphs with a glyf bounding box, so each
  # bitmap glyph gets two coincident rectangles of opposite winding: a box
- # with zero fill that reads as tofu wherever sbix is unsupported.
+ # with zero fill that reads as tofu wherever sbix is unsupported. When a
+ # glyph has contours, CoreText and FreeType place the bitmap relative to the
+ # lower-left corner of that box, not the glyph origin (Apple Color Emoji
+ # ships zero offsets over a box at the baseline), so the box is the bitmap's
+ # own rectangle and the origin offsets are measured from it: zero here.
  from fontTools.ttLib import newTable
  from fontTools.ttLib.tables._g_l_y_f import Glyph
  from fontTools.ttLib.tables.sbixStrike import Strike
@@ -133,9 +137,10 @@ elif args.emoji:
   if name not in bitmaps:
    glyf.glyphs[name]=Glyph(); continue
   m=bitmaps[name].metrics
-  strike.glyphs[name]=SbixGlyph(glyphName=name,graphicType='png ',imageData=bitmaps[name].imageData,originOffsetX=m.BearingX,originOffsetY=m.BearingY-m.height)
   x0,y0=round(m.BearingX*upem/ppem),round((m.BearingY-m.height)*upem/ppem)
   x1,y1=round((m.BearingX+m.width)*upem/ppem),round(m.BearingY*upem/ppem)
+  px=lambda units:round(units*ppem/upem)
+  strike.glyphs[name]=SbixGlyph(glyphName=name,graphicType='png ',imageData=bitmaps[name].imageData,originOffsetX=m.BearingX-px(x0),originOffsetY=m.BearingY-m.height-px(y0))
   pen=TTGlyphPen(None)
   pen.moveTo((x0,y0));pen.lineTo((x0,y1));pen.lineTo((x1,y1));pen.lineTo((x1,y0));pen.closePath()
   pen.moveTo((x0,y0));pen.lineTo((x1,y0));pen.lineTo((x1,y1));pen.lineTo((x0,y1));pen.closePath()

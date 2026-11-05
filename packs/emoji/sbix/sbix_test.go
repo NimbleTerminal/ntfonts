@@ -41,7 +41,9 @@ func TestFormat(t *testing.T) {
 
 // TestDerivedFromCBDT proves the artwork and shaping data are the pinned
 // CBDT font's: identical layout tables, and the same PNG per glyph placed at
-// the same origin.
+// the same position. CoreText and FreeType measure sbix offsets from the
+// lower-left corner of the glyf box when a glyph has contours, so the
+// expected offset is the CBDT origin minus that corner in strike pixels.
 func TestDerivedFromCBDT(t *testing.T) {
 	got, src := parsed(t, face(t, "Regular")), parsed(t, cbdt(t))
 	for _, tag := range []string{"cmap", "GSUB", "hmtx", "vhea", "vmtx", "OS/2", "post"} {
@@ -73,6 +75,8 @@ func TestDerivedFromCBDT(t *testing.T) {
 	if len(want) != bitmaps || len(have) != bitmaps {
 		t.Fatalf("%d sbix bitmaps, %d CBDT bitmaps, want %d", len(have), len(want), bitmaps)
 	}
+	upem := u16(got["head"], 18)
+	px := func(units int) int { return int(math.Round(float64(units) * float64(ppem) / float64(upem))) }
 	for gid, w := range want {
 		h, ok := have[gid]
 		if !ok {
@@ -81,8 +85,12 @@ func TestDerivedFromCBDT(t *testing.T) {
 		if !bytes.Equal(h.png, w.png) || !bytes.HasPrefix(h.png, []byte("\x89PNG")) {
 			t.Fatalf("glyph %d PNG differs", gid)
 		}
-		if h.x != w.x || h.y != w.y {
-			t.Fatalf("glyph %d origin (%d,%d), CBDT (%d,%d)", gid, h.x, h.y, w.x, w.y)
+		_, xMin, yMin, _, _, empty := glyfBox(got, gid)
+		if empty {
+			t.Fatalf("glyph %d has a bitmap but no glyf box", gid)
+		}
+		if h.x != w.x-px(xMin) || h.y != w.y-px(yMin) {
+			t.Fatalf("glyph %d offset (%d,%d), want CBDT origin (%d,%d) relative to box corner (%d,%d)", gid, h.x, h.y, w.x, w.y, px(xMin), px(yMin))
 		}
 	}
 }
