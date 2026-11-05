@@ -2,9 +2,11 @@
 
 ## Unreleased
 
+## v0.3.1 - 2026-11-04
+
 - Add `Source.Fallbacks()` on `cjk`, `scregular` and `scbold` so renderers can
   discover regional fallback families through the source value, matching the
-  core, `packs`, `emoji` and `sbix` modules.
+  core, `packs`, `emoji` and `sbix` modules. Font payloads are unchanged.
 
 ## v0.3.0 - 2026-11-04
 

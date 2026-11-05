@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## v0.3.1 - 2026-11-04
+
+- Release harmony with `ntfonts` v0.3.1 (`packs/v0.3.1`). No code or font
+  changes since v0.3.0.
+
 ## v0.3.0 - 2026-11-04
 
 - Initial `nimbleterminal.dev/ntfonts/packs` module: seven opt-in script
