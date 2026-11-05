@@ -64,13 +64,17 @@ pinned source, selected by feature detection rather than user-agent sniffing.
    writing `packs/emoji/sbix/{NotoColorEmoji-sbix.ttf, notocoloremoji.OFL.txt,
    subsets.sha256}`. `packs/emoji/sbix/sources.json` is a checked-in copy of
    the emoji sources. No runtime downloads; no other inputs.
-6. **Tests** (standard library only, in `packs/emoji/sbix`): table presence
-   (`sbix`, `glyf`, `loca`; no `CBDT`, `CBLC`, `COLR`, `CPAL`, `SVG `);
-   derivation from `../NotoColorEmoji.ttf` (identical `cmap`, `GSUB`, `hmtx`,
-   `hhea`, `vhea`, `vmtx`, `OS/2`, `post` bytes; same glyph count; per-glyph
-   PNG identity and origin offsets; 3,985 bitmaps); `glyf` boxes; name table;
-   `ccmp` and a format 14 cmap subtable; faces/aliases/errors; `Files()`,
-   `WebFaces()` with `Tech`; licenses; pinned hash; 12,000,000-byte budget.
+6. **Tests** (standard library only): in `packs/emoji/sbix` (self-contained, no
+   parent checkout required): table presence (`sbix`, `glyf`, `loca`; no
+   `CBDT`, `CBLC`, `COLR`, `CPAL`, `SVG `); 3,985 136x128 PNG strikes at 109
+   ppem/72 ppi with zero offsets; `glyf` boxes with two opposite-winding
+   contours and `maxp` limits; name table; `ccmp` and a format 14 cmap
+   subtable; faces/aliases/errors; `Files()`, `WebFaces()` with `Tech`;
+   licenses; pinned hash; 12,000,000-byte budget. At the repository root:
+   cross-font derivation check against `packs/emoji/NotoColorEmoji.ttf`
+   (identical `cmap`, `GSUB`, `hmtx`, `hhea` line metrics, `vhea`, `vmtx`,
+   `OS/2`, `post`; same glyph count; per-glyph PNG identity, scaled `glyf`
+   boxes and origin offsets).
 7. **Specimen viewer** catalogs the sbix file as a second `Noto Color Emoji`
    face with a `tech` field, picks the first face whose tech the browser
    supports, loads it lazily (existing behavior), and reports when no format

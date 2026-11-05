@@ -51,10 +51,13 @@ build is deterministic and needs no other input:
   rename is not required; it keeps the modified file distinguishable from
   Google's. The public file name is `NotoColorEmoji-sbix.ttf`.
 
-Tests compare the embedded file with `../NotoColorEmoji.ttf` table by table
-and glyph by glyph (PNG bytes, offsets, `glyf` boxes), check the name table,
+Module tests check the embedded file's tables, strikes, PNG headers, zero-fill
+`glyf` boxes (including opposite contour winding and `maxp` limits), name table,
 `ccmp` and the format 14 cmap, the API, `Files()` traversal refusal, the OFL
-notice, the pinned hash and the size budget.
+notice, the pinned hash and the size budget without reading outside the module.
+A repository integration test at the root compares the file with
+`packs/emoji/NotoColorEmoji.ttf` table by table and glyph by glyph (PNG bytes,
+offsets, `glyf` boxes).
 
 ## Serving to a browser
 

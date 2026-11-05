@@ -17,9 +17,6 @@ import (
 const (
 	family   = "Noto Color Emoji"
 	fileName = "NotoColorEmoji-sbix.ttf"
-	// The CBDT source this file is derived from, read from the parent module's
-	// checkout; the two modules never import each other.
-	cbdtPath = "../NotoColorEmoji.ttf"
 	bitmaps  = 3985
 )
 
@@ -39,92 +36,46 @@ func TestFormat(t *testing.T) {
 	}
 }
 
-// TestDerivedFromCBDT proves the artwork and shaping data are the pinned
-// CBDT font's: identical layout tables, and the same PNG per glyph placed at
-// the same position. CoreText and FreeType measure sbix offsets from the
-// lower-left corner of the glyf box when a glyph has contours, so the
-// expected offset is the CBDT origin minus that corner in strike pixels.
-func TestDerivedFromCBDT(t *testing.T) {
-	got, src := parsed(t, face(t, "Regular")), parsed(t, cbdt(t))
-	for _, tag := range []string{"cmap", "GSUB", "hmtx", "vhea", "vmtx", "OS/2", "post"} {
-		if !bytes.Equal(got[tag], src[tag]) {
-			t.Errorf("%s differs from the CBDT font", tag)
-		}
-	}
-	// hhea's outline extents are recomputed for the new glyf boxes; the line
-	// metrics and the hmtx count must not change.
-	for _, off := range []int{4, 6, 8, 34} {
-		if i16(got["hhea"], off) != i16(src["hhea"], off) {
-			t.Errorf("hhea field at %d differs from the CBDT font", off)
-		}
-	}
-	if numGlyphs(got) != numGlyphs(src) {
-		t.Fatalf("numGlyphs %d, CBDT %d", numGlyphs(got), numGlyphs(src))
-	}
-	srcPpem, want, err := cbdtBitmaps(src)
-	if err != nil {
-		t.Fatal(err)
+// TestGlyfBoxes checks the embedded sbix strikes and the bounding boxes Chrome
+// needs without reading outside the module: 3,985 136x128 PNGs at 109 ppem/72
+// ppi with zero origin offsets relative to the box corner, two opposite-winding
+// contours over the scaled strike box for bitmap glyphs, nothing for the rest,
+// and maxp outline limits large enough for them. Cross-font identity with the
+// parent CBDT file is verified by TestSbixDerivedFromCBDT at the repo root.
+func TestGlyfBoxes(t *testing.T) {
+	got := parsed(t, face(t, "Regular"))
+	if maxPoints, maxContours := u16(got["maxp"], 6), u16(got["maxp"], 8); maxPoints < 8 || maxContours < 2 {
+		t.Fatalf("maxp maxPoints=%d maxContours=%d, want at least 8 and 2", maxPoints, maxContours)
 	}
 	ppem, ppi, have, err := sbixBitmaps(got)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if ppem != srcPpem || ppem != 109 || ppi != 72 {
-		t.Fatalf("strike %d ppem %d ppi, CBDT %d ppem", ppem, ppi, srcPpem)
-	}
-	if len(want) != bitmaps || len(have) != bitmaps {
-		t.Fatalf("%d sbix bitmaps, %d CBDT bitmaps, want %d", len(have), len(want), bitmaps)
-	}
-	upem := u16(got["head"], 18)
-	px := func(units int) int { return int(math.Round(float64(units) * float64(ppem) / float64(upem))) }
-	for gid, w := range want {
-		h, ok := have[gid]
-		if !ok {
-			t.Fatalf("glyph %d has no sbix bitmap", gid)
-		}
-		if !bytes.Equal(h.png, w.png) || !bytes.HasPrefix(h.png, []byte("\x89PNG")) {
-			t.Fatalf("glyph %d PNG differs", gid)
-		}
-		_, xMin, yMin, _, _, empty := glyfBox(got, gid)
-		if empty {
-			t.Fatalf("glyph %d has a bitmap but no glyf box", gid)
-		}
-		if h.x != w.x-px(xMin) || h.y != w.y-px(yMin) {
-			t.Fatalf("glyph %d offset (%d,%d), want CBDT origin (%d,%d) relative to box corner (%d,%d)", gid, h.x, h.y, w.x, w.y, px(xMin), px(yMin))
-		}
-	}
-}
-
-// TestGlyfBoxes checks the bounding boxes Chrome needs: two opposite-winding
-// contours over the bitmap's design-space box for bitmap glyphs, nothing for
-// the rest, and maxp outline limits large enough for them.
-func TestGlyfBoxes(t *testing.T) {
-	got, src := parsed(t, face(t, "Regular")), parsed(t, cbdt(t))
-	if maxPoints, maxContours := u16(got["maxp"], 6), u16(got["maxp"], 8); maxPoints < 8 || maxContours < 2 {
-		t.Fatalf("maxp maxPoints=%d maxContours=%d, want at least 8 and 2", maxPoints, maxContours)
-	}
-	ppem, want, err := cbdtBitmaps(src)
-	if err != nil {
-		t.Fatal(err)
+	if ppem != 109 || ppi != 72 || len(have) != bitmaps {
+		t.Fatalf("strike %d ppem %d ppi with %d bitmaps, want 109 ppem 72 ppi with %d", ppem, ppi, len(have), bitmaps)
 	}
 	upem := u16(got["head"], 18)
 	scale := func(v int) int { return int(math.Round(float64(v) * float64(upem) / float64(ppem))) }
 	for gid := range numGlyphs(got) {
 		contours, xMin, yMin, xMax, yMax, empty := glyfBox(got, gid)
-		w, ok := want[gid]
+		h, ok := have[gid]
 		if !ok {
 			if !empty {
 				t.Fatalf("glyph %d without bitmap has an outline", gid)
 			}
 			continue
 		}
+		if !bytes.HasPrefix(h.png, []byte("\x89PNG\r\n\x1a\n")) || len(h.png) < 24 || u32(h.png, 16) != 136 || u32(h.png, 20) != 128 {
+			t.Fatalf("glyph %d is not a 136x128 PNG", gid)
+		}
+		if h.x != 0 || h.y != 0 {
+			t.Fatalf("glyph %d offset (%d,%d), want (0,0) relative to box corner", gid, h.x, h.y)
+		}
 		if empty || contours != 2 {
 			t.Fatalf("glyph %d: %d contours, empty %v", gid, contours, empty)
 		}
-		// All Noto strikes are 136x128 at 109 ppem; derive the box from the
-		// CBDT metrics rather than hard-coding it.
-		if xMin != scale(w.x) || yMin != scale(w.y) || xMax != scale(w.x+136) || yMax != scale(w.y+128) {
-			t.Fatalf("glyph %d box (%d,%d)-(%d,%d)", gid, xMin, yMin, xMax, yMax)
+		if xMax-xMin != scale(136) || yMax-yMin != scale(128) {
+			t.Fatalf("glyph %d box (%d,%d)-(%d,%d) size (%d,%d), want (%d,%d)", gid, xMin, yMin, xMax, yMax, xMax-xMin, yMax-yMin, scale(136), scale(128))
 		}
 		if areas := contourAreas(got, gid); len(areas) != 2 || areas[0] == 0 || areas[0]+areas[1] != 0 {
 			t.Fatalf("glyph %d contour areas %v do not cancel", gid, areas)
@@ -264,15 +215,6 @@ func TestBudget(t *testing.T) {
 func face(t *testing.T, variant string) []byte {
 	t.Helper()
 	data, err := sbix.Embedded.Face(family, variant)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return data
-}
-
-func cbdt(t *testing.T) []byte {
-	t.Helper()
-	data, err := os.ReadFile(cbdtPath)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -34,53 +34,10 @@ func i16(b []byte, off int) int { return int(int16(binary.BigEndian.Uint16(b[off
 func numGlyphs(t map[string][]byte) int { return u16(t["maxp"], 4) }
 
 // bitmap is one glyph's PNG and its origin offset in strike pixels: x is the
-// left edge and y the bottom edge relative to the glyph origin.
+// left edge and y the bottom edge relative to the glyph's bounding box corner.
 type bitmap struct {
 	png  []byte
 	x, y int
-}
-
-// cbdtBitmaps reads strike 0 of a CBLC/CBDT font with index format 1 or 3
-// and image format 17 (small metrics + PNG), as Noto Color Emoji uses.
-func cbdtBitmaps(t map[string][]byte) (ppem int, glyphs map[int]bitmap, err error) {
-	cblc, cbdt := t["CBLC"], t["CBDT"]
-	if cblc == nil || cbdt == nil {
-		return 0, nil, fmt.Errorf("no CBLC/CBDT")
-	}
-	size := cblc[8:] // first BitmapSize record
-	arrayOff, count, ppem := u32(size, 0), u32(size, 8), int(size[44])
-	glyphs = map[int]bitmap{}
-	for i := range count {
-		entry := cblc[arrayOff+8*i:]
-		first, last, sub := u16(entry, 0), u16(entry, 2), cblc[arrayOff+u32(entry, 4):]
-		indexFormat, imageFormat, dataOff := u16(sub, 0), u16(sub, 2), u32(sub, 4)
-		if imageFormat != 17 {
-			return 0, nil, fmt.Errorf("image format %d", imageFormat)
-		}
-		offset := func(k int) int {
-			switch indexFormat {
-			case 1:
-				return u32(sub, 8+4*k)
-			case 3:
-				return u16(sub, 8+2*k)
-			}
-			return -1
-		}
-		for gid := first; gid <= last; gid++ {
-			start, end := offset(gid-first), offset(gid-first+1)
-			if start < 0 {
-				return 0, nil, fmt.Errorf("index format %d", indexFormat)
-			}
-			if start == end {
-				continue
-			}
-			g := cbdt[dataOff+start : dataOff+end]
-			height, bearingX, bearingY := int(g[0]), int(int8(g[2])), int(int8(g[3]))
-			n := u32(g, 5)
-			glyphs[gid] = bitmap{png: g[9 : 9+n], x: bearingX, y: bearingY - height}
-		}
-	}
-	return ppem, glyphs, nil
 }
 
 // sbixBitmaps reads the single strike of an sbix font.
