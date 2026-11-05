@@ -34,8 +34,15 @@ pinned source, selected by feature detection rather than user-agent sniffing.
 
 1. **Format: sbix** (Apple's bitmap format, PNG strikes). One strike at the
    CBDT strike's ppem (109) and 72 ppi. Every glyph with a CBDT bitmap gets
-   the identical PNG bytes with `originOffsetX = BearingX`,
-   `originOffsetY = BearingY - height`. No resampling: artwork is byte-identical.
+   the identical PNG bytes. No resampling: artwork is byte-identical.
+   *Amended during execution:* the origin offsets are measured from the
+   lower-left corner of the glyph's `glyf` box, not from the glyph origin.
+   FreeType (`ttgload.c`, sbix branch) and CoreText shift sbix bitmaps by the
+   box corner when a glyph has contours, and Apple Color Emoji ships zero
+   offsets over a baseline box. Because the box is the bitmap's own rectangle,
+   the offsets are `BearingX - px(xMin)` and `(BearingY - height) - px(yMin)`,
+   both zero for Noto. The first build with origin-relative offsets rendered
+   27 px too low in WebKit, Chrome and FreeType alike.
 2. **Separate module** `nimbleterminal.dev/ntfonts/packs/emoji/sbix`, package
    `sbix`. Keeping it inside `packs/emoji` would double that module's zip for
    every consumer. The emoji module and its API are unchanged except for one
@@ -89,6 +96,6 @@ pinned source, selected by feature detection rather than user-agent sniffing.
 - WebKit's fallback picks the system emoji font for sequences whose base
   character the preceding text font covers (keycap digits, `❤️`, `✈️`) when
   the emoji family is listed after a text font. Chrome routes them to Noto.
-- Noto glyphs are about 1.17 em wide; Apple Color Emoji is narrower. Line
-  layout differs from the platform font by design.
+- Noto glyphs advance 2550/2048 = 1.245 em; Apple Color Emoji is narrower.
+  Line layout differs from the platform font by design.
 - The file is 10.8 MB; consumers must load it lazily.

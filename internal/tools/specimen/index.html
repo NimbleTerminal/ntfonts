@@ -98,9 +98,17 @@ async function load(face){
 // browser understands font-tech queries at all; otherwise try the first file.
 const techQuery=globalThis.CSS&&typeof CSS.supports==='function'&&CSS.supports('font-tech(variations)');
 function usable(f){return !f.tech||!techQuery||CSS.supports('font-tech('+f.tech+')')}
+// pick returns the candidate files for a family, best variant first; two
+// color emoji files share a variant, so a failed load falls through to the
+// next candidate (a browser that cannot answer font-tech still reaches sbix).
 function pick(family,variant){
- const faces=catalog.filter(f=>f.family===family&&usable(f));
- return faces.find(f=>f.variant===variant)||faces.find(f=>f.variant===(variant.includes('Bold')?'Bold':'Regular'))||faces.find(f=>f.variant==='Regular');
+ const faces=catalog.filter(f=>f.family===family&&usable(f)),order=[variant,variant.includes('Bold')?'Bold':'Regular','Regular'];
+ return faces.filter(f=>order.includes(f.variant)).sort((a,b)=>order.indexOf(a.variant)-order.indexOf(b.variant));
+}
+async function loadFirst(candidates){
+ let failure;
+ for(const face of candidates){try{return await load(face)}catch(error){failure=error}}
+ throw failure||Error('No loadable face');
 }
 function unsupported(){return [...new Set(catalog.filter(f=>f.tech).map(f=>f.family))].filter(family=>!catalog.some(f=>f.family===family&&usable(f)))}
 function panel(text,fonts,title){
@@ -124,8 +132,8 @@ async function render(){
   if($('symbols').checked)requested.push(pick('Noto Sans Symbols 2',variant));
   if($('cjk').checked)requested.push(pick('Noto Sans CJK SC',variant));
   if($('packs').checked)for(const family of [...new Set(catalog.filter(f=>f.group==='packs').map(f=>f.family))])requested.push(pick(family,variant));
-  if(!selected)throw Error(`${$('family').value}: no color format this browser reports supporting (${catalog.filter(f=>f.family===$('family').value).map(f=>f.tech).join(', ')}). The platform emoji font would render instead.`);
-  const fonts=await Promise.all([...new Set(requested.filter(Boolean))].map(load));
+  if(!selected.length)throw Error(`${$('family').value}: no color format this browser reports supporting (${catalog.filter(f=>f.family===$('family').value).map(f=>f.tech).join(', ')}). The platform emoji font would render instead.`);
+  const seen=new Set(),fonts=await Promise.all(requested.filter(c=>c.length&&!seen.has(c[0].url)&&seen.add(c[0].url)).map(loadFirst));
   if(current!==generation)return;
   const primary=fonts[0],label=f=>f.tech?`${f.family} (${f.tech})`:f.family,skipped=$('packs').checked?unsupported():[];
   $('status').textContent=`${label(primary)} · requested ${variant}, actual ${primary.variant} · ${primary.bytes.toLocaleString()} bytes. Active chain: ${fonts.map(label).join(' → ')}`+(skipped.length?`. ${skipped.join(', ')}: no color format this browser reports supporting; the platform emoji font renders instead.`:'');

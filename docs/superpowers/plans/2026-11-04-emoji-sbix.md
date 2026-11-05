@@ -10,6 +10,8 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-04-emoji-sbix-design.md`
 
+> **Executed 2026-11-04.** Task 1's `originOffsetY = BearingY - height` and Task 2's matching assertion were superseded: offsets are measured from the `glyf` box corner (zero). See the spec's amended Decision 1 and the ledger ruling for Task 7.
+
 ## Global Constraints
 
 - Standard library only; no `require` or `replace` in any go.mod.

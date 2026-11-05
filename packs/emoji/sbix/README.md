@@ -92,17 +92,25 @@ mux.Handle("/fonts/"+sbix.WebFaces()[0].File, http.StripPrefix("/fonts/", http.F
 ```js
 // Lazy: call when the user opts into Noto, not on page load (10.7 MB).
 async function loadEmojiFont(faces, cssFamily = 'Noto Color Emoji') {
-  // Trust a negative answer only when the browser understands font-tech at all.
+  // Trust a negative answer only when the browser understands font-tech at
+  // all (Safari 17+, Chrome 105+). Older browsers try each file in order; a
+  // rejected format fails at load() and the next one is tried.
   const canQuery = globalThis.CSS?.supports?.('font-tech(variations)') === true;
-  const face = faces.find(f => !canQuery || CSS.supports(`font-tech(${f.tech})`));
-  if (!face) return null; // neither format: keep the platform emoji font
-  const font = new FontFace(cssFamily, `url("${face.src}")`, {
-    weight: String(face.weight), style: face.style,
-    unicodeRange: 'U+0021-10FFFF', // Noto's space is 1.25 em wide; leave U+0020 to the text font
-  });
-  await font.load();
-  document.fonts.add(font);
-  return face.tech; // "color-CBDT" or "color-sbix"
+  for (const face of faces) {
+    if (canQuery && !CSS.supports(`font-tech(${face.tech})`)) continue;
+    const font = new FontFace(cssFamily, `url("${face.src}")`, {
+      weight: String(face.weight), style: face.style,
+      unicodeRange: 'U+0021-10FFFF', // Noto's space is 1.25 em wide; leave U+0020 to the text font
+    });
+    try {
+      await font.load();
+    } catch {
+      continue; // this browser cannot use the format; try the next file
+    }
+    document.fonts.add(font);
+    return face.tech; // "color-CBDT" or "color-sbix"
+  }
+  return null; // neither format: keep the platform emoji font
 }
 ```
 
