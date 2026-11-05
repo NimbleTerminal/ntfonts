@@ -8,8 +8,9 @@ Guidance for coding agents working in this repository.
 families as 28 text subset faces plus a symbol fallback (about 3.97 MB), served through
 `ntfonts.Embedded`, a `Source` whose `Face(family, variant)` method is
 nttypeset's `FaceSource`. Optional nested modules add Simplified Chinese
-(`cjk`), seven Noto Sans script packs (`packs`) and Noto Color Emoji
-(`packs/emoji`) behind the same contract. It was extracted from gloss's typeset view. Develop
+(`cjk`), seven Noto Sans script packs (`packs`), Noto Color Emoji
+(`packs/emoji`) and its Safari-compatible sbix conversion (`packs/emoji/sbix`)
+behind the same contract. It was extracted from gloss's typeset view. Develop
 with Go 1.27.3; the module minimum is Go 1.26.
 
 What it is not:
@@ -32,7 +33,7 @@ task test-race           # race detector (needs a C compiler)
 task lint                # golangci-lint v2 (installed into .task/bin)
 task vet fmt fmt-check go-tidy-check go-verify
 task fonts-check         # verify the 29 core subsets against subsets.sha256
-task cjk-ci packs-ci emoji-ci   # nested module gates (root `task ci` runs them)
+task cjk-ci packs-ci emoji-ci sbix-ci   # nested module gates (root `task ci` runs them)
 task build cross-windows cross-wasm
 task notices             # regenerate THIRD_PARTY_NOTICES.md
 task clean
@@ -47,8 +48,9 @@ GOWORK=off go test -mod=readonly -run 'TestName' .
 ## Module layout
 
 Core module `nimbleterminal.dev/ntfonts` and optional nested modules
-`nimbleterminal.dev/ntfonts/cjk`, `nimbleterminal.dev/ntfonts/packs` and
-`nimbleterminal.dev/ntfonts/packs/emoji`. Root `task ci` checks all four. Never
+`nimbleterminal.dev/ntfonts/cjk`, `nimbleterminal.dev/ntfonts/packs`,
+`nimbleterminal.dev/ntfonts/packs/emoji` and
+`nimbleterminal.dev/ntfonts/packs/emoji/sbix`. Root `task ci` checks all five. Never
 add local sibling `replace` directives.
 
 | Path | Role |
@@ -62,6 +64,7 @@ add local sibling `replace` directives.
 | `scripts/subset-fonts.py` | Regenerates the subsets and `subsets.sha256` (`--cjk`, `--packs`, `--emoji` select a nested module). |
 | `packs/` | Nested module: `arabic` ... `khmer` packages (Noto Sans Regular+Bold, all layout features), combined `packs` source, `internal/notice`, `internal/pack`, `union.go`. |
 | `packs/emoji/` | Nested module embedding `NotoColorEmoji.ttf` (CBDT) unmodified. |
+| `packs/emoji/sbix/` | Nested module embedding `NotoColorEmoji-sbix.ttf`, the same bitmaps as an sbix font for WebKit; built by `--emoji`. |
 | `cjk/` | Nested module: SC Regular/Bold leaves; see `cjk/README.md`. |
 | `Go*.ttf`, `LICENSE.gofont` | Unused Go reference fonts and their license. |
 | `internal/tools/notices` | Generates `THIRD_PARTY_NOTICES.md` (`task notices`). |
@@ -81,14 +84,22 @@ Breaking these breaks consumers, even if tests still pass.
 - **Pack subsets keep every layout feature** (`layout_features=['*']`), unlike
   the text subsets; the emoji file is embedded unmodified and must carry
   CBDT/CBLC, never COLR or SVG. Tests assert both.
+- **The sbix file is derived, never edited.** `packs/emoji/sbix` carries
+  `sbix`, `glyf` and `loca`, no CBDT/CBLC; its PNGs, origins, `cmap`, `GSUB`
+  and `hmtx` must match `packs/emoji/NotoColorEmoji.ttf` (tests compare them),
+  and every bitmap glyph keeps a zero-fill `glyf` box because Chrome needs one.
+  Its name table says `Noto Color Emoji sbix`; the API family is still
+  `Noto Color Emoji`. `WebFace.Tech` (`color-CBDT`, `color-sbix`) is how
+  browsers choose.
 - **Pack files on disk use public Noto names** (`NotoSansArabic-Regular.ttf`);
   only the name table says `Gloss <Script>`. `Files()`/`WebFaces()` serve those names.
 - **Family and variant names are the API.** `Families()` returns the seven
   upstream names; variants are `Regular`, `Bold`, `Italic`, `BoldItalic`.
 - **The `Go*.ttf` files are not embedded.**
-- **Release harmony.** Core, `cjk`, `packs` and `packs/emoji` share one version
-  and are tagged together (`vX.Y.Z`, `cjk/vX.Y.Z`, `packs/vX.Y.Z`,
-  `packs/emoji/vX.Y.Z`); every CHANGELOG gets the heading.
+- **Release harmony.** Core, `cjk`, `packs`, `packs/emoji` and
+  `packs/emoji/sbix` share one version and are tagged together (`vX.Y.Z`,
+  `cjk/vX.Y.Z`, `packs/vX.Y.Z`, `packs/emoji/vX.Y.Z`,
+  `packs/emoji/sbix/vX.Y.Z`); every CHANGELOG gets the heading.
 
 ## Tests and reporting
 

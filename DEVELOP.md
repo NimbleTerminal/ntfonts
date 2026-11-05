@@ -1,9 +1,9 @@
 # Development
 
 Use Go 1.27.3 for development and CI (the module minimum is Go 1.26). The root
-module and the optional nested modules `cjk/`, `packs/` and `packs/emoji/` have
-no dependencies. The root `task ci` also runs the three nested module gates
-(`cjk-ci`, `packs-ci`, `emoji-ci`). Installed QA tools live in
+module and the optional nested modules `cjk/`, `packs/`, `packs/emoji/` and
+`packs/emoji/sbix/` have no dependencies. The root `task ci` also runs the four
+nested module gates (`cjk-ci`, `packs-ci`, `emoji-ci`, `sbix-ci`). Installed QA tools live in
 `.task/bin/` and generated output in
 `bin/` and `dist/`; all are ignored.
 
@@ -59,11 +59,16 @@ Build the script packs with `--packs` (uses `packs/sources.json`, writes
 under `packs/internal/notice/`, `packs/coverage.json` and `packs/subsets.sha256`,
 retaining every layout feature) and the emoji module with `--emoji` (copies the
 hash-verified CBDT `NotoColorEmoji.ttf` from googlefonts/noto-emoji v2.051 into
-`packs/emoji/` unmodified). The three modes are mutually exclusive; text mode
-output must stay byte-identical when the script changes.
+`packs/emoji/` unmodified, then derives `packs/emoji/sbix/NotoColorEmoji-sbix.ttf`
+from it: the same PNG strike as an `sbix` table, a zero-fill `glyf` box per
+bitmap glyph, CBDT/CBLC dropped, name table renamed `Noto Color Emoji sbix`;
+it writes that module's `subsets.sha256` and OFL copy too; the build is
+deterministic, so a rerun leaves the tree clean). The three modes are mutually
+exclusive; text mode output must stay byte-identical when the script changes.
 
-Run `task notices`, `task --dir cjk notices`, `task --dir packs notices` and
-`task --dir packs/emoji notices` after font or license changes,
+Run `task notices`, `task --dir cjk notices`, `task --dir packs notices`,
+`task --dir packs/emoji notices` and `task --dir packs/emoji/sbix notices`
+after font or license changes,
 then review and commit
 THIRD_PARTY_NOTICES.md. `task notices-check` enforces that generated text in CI.
 
@@ -79,16 +84,17 @@ replacements. Update CHANGELOG.md, run `task ci`, and review font licenses. Then
 commit the release preparation, tag the intended version, wait for tag CI to
 pass, and publish the GitHub release with its changelog.
 
-All four modules release together under one version number (release
+All five modules release together under one version number (release
 harmony): every release creates the tags `vX.Y.Z`, `cjk/vX.Y.Z`,
-`packs/vX.Y.Z` and `packs/emoji/vX.Y.Z` on the same commit, and every module's
+`packs/vX.Y.Z`, `packs/emoji/vX.Y.Z` and `packs/emoji/sbix/vX.Y.Z` on the same
+commit, and every module's
 CHANGELOG gets a heading for that version even when its code did not change.
 Parent tags do not release the nested modules on their own, and the vanity
 redirect for the first path segment covers them all. Nested modules have no
 `require` on each other, so no go.mod edits are needed to bump.
 
 GitHub creates no workflow runs when more than three tags are pushed in one
-`git push`, so push the four release tags in two pushes (or one at a time), or
+`git push`, so push the five release tags in two pushes (or one at a time), or
 dispatch `ci.yml` on each tag afterwards with `gh workflow run ci.yml --ref <tag>`.
 The Pages site needs no tag run when the same commit was already deployed from `main`.
 
@@ -113,7 +119,8 @@ change the library API or embed CJK in the core library.
 
 `.github/workflows/pages.yml` runs the full CI gate, exports the specimen, and
 deploys it on pushes to `main`, core version tags (`v*`), CJK version tags
-(`cjk/v*`), and pack version tags (`packs/v*`, `packs/emoji/v*`). It also supports manual runs. All triggers update the same Pages
+(`cjk/v*`), and pack version tags (`packs/v*`, `packs/emoji/v*`,
+`packs/emoji/sbix/v*`). It also supports manual runs. All triggers update the same Pages
 site; the most recent successful deployment replaces it (no per-tag archive).
 
 Repository setup: select **Settings → Pages → Build and deployment → Source →

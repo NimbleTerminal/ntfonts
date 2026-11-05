@@ -132,6 +132,7 @@ tasks:
       - task: cjk-ci
       - task: packs-ci
       - task: emoji-ci
+      - task: sbix-ci
   cjk-ci:
     desc: Run the optional CJK module gate including leaf link-isolation tests
     cmds: ['task --dir cjk ci']
@@ -141,6 +142,9 @@ tasks:
   emoji-ci:
     desc: Run the emoji module gate
     cmds: ['task --dir packs/emoji ci']
+  sbix-ci:
+    desc: Run the sbix emoji module gate
+    cmds: ['task --dir packs/emoji/sbix ci']
   clean:
     desc: Remove generated binaries and task tools
     cmds: ['rm -rf bin dist .task']
