@@ -2,6 +2,7 @@
 """Build pinned font subsets. Requires fonttools==4.60.2; never used at runtime.
 Usage: python scripts/subset-fonts.py CACHE [--download] [--cjk | --packs | --emoji]
 The download step verifies sources.json hashes before instancing/subsetting.
+--emoji copies the CBDT font into packs/emoji and derives packs/emoji/sbix.
 """
 import argparse, hashlib, json, shutil, urllib.request, zipfile, tempfile
 from fontTools.merge import Merger
@@ -18,7 +19,7 @@ parser.add_argument('--download',action='store_true')
 mode=parser.add_mutually_exclusive_group()
 mode.add_argument('--cjk',action='store_true',help='build only the optional CJK module')
 mode.add_argument('--packs',action='store_true',help='build only the optional script packs module')
-mode.add_argument('--emoji',action='store_true',help='copy only the optional emoji module font')
+mode.add_argument('--emoji',action='store_true',help='copy the optional emoji module font and derive its sbix companion')
 args=parser.parse_args()
 root=Path(__file__).resolve().parents[1]
 args.cache.mkdir(parents=True,exist_ok=True)
@@ -112,6 +113,44 @@ elif args.emoji:
  shutil.copyfile(args.cache/'NotoColorEmoji.ttf',output/'NotoColorEmoji.ttf')
  shutil.copyfile(args.cache/'notocoloremoji-OFL.txt',output/'notocoloremoji.OFL.txt')
  record_hash(output/'NotoColorEmoji.ttf')
+ # The sbix companion carries the same PNG strikes for WebKit, which rejects
+ # CBDT. Chrome draws sbix only for glyphs with a glyf bounding box, so each
+ # bitmap glyph gets two coincident rectangles of opposite winding: a box
+ # with zero fill that reads as tofu wherever sbix is unsupported.
+ from fontTools.ttLib import newTable
+ from fontTools.ttLib.tables._g_l_y_f import Glyph
+ from fontTools.ttLib.tables.sbixStrike import Strike
+ from fontTools.ttLib.tables.sbixGlyph import Glyph as SbixGlyph
+ from fontTools.pens.ttGlyphPen import TTGlyphPen
+ sbixdir=output/'sbix'; sbixdir.mkdir(exist_ok=True)
+ font=TTFont(args.cache/'NotoColorEmoji.ttf',recalcTimestamp=False)
+ ppem=font['CBLC'].strikes[0].bitmapSizeTable.ppemX; upem=font['head'].unitsPerEm
+ bitmaps=font['CBDT'].strikeData[0]
+ table=newTable('sbix'); table.version=1; table.flags=1; table.strikes={}
+ strike=Strike(ppem=ppem,resolution=72)
+ glyf=newTable('glyf'); glyf.glyphs={}; glyf.glyphOrder=font.getGlyphOrder()
+ for name in glyf.glyphOrder:
+  if name not in bitmaps:
+   glyf.glyphs[name]=Glyph(); continue
+  m=bitmaps[name].metrics
+  strike.glyphs[name]=SbixGlyph(glyphName=name,graphicType='png ',imageData=bitmaps[name].imageData,originOffsetX=m.BearingX,originOffsetY=m.BearingY-m.height)
+  x0,y0=round(m.BearingX*upem/ppem),round((m.BearingY-m.height)*upem/ppem)
+  x1,y1=round((m.BearingX+m.width)*upem/ppem),round(m.BearingY*upem/ppem)
+  pen=TTGlyphPen(None)
+  pen.moveTo((x0,y0));pen.lineTo((x0,y1));pen.lineTo((x1,y1));pen.lineTo((x1,y0));pen.closePath()
+  pen.moveTo((x0,y0));pen.lineTo((x1,y0));pen.lineTo((x1,y1));pen.lineTo((x0,y1));pen.closePath()
+  glyf.glyphs[name]=pen.glyph()
+ table.strikes[ppem]=strike
+ font['sbix']=table; font['glyf']=glyf; font['loca']=newTable('loca')
+ del font['CBDT'],font['CBLC']
+ version=next(r.toUnicode() for r in font['name'].names if r.nameID==5)
+ names={1:'Noto Color Emoji sbix',3:'Noto Color Emoji sbix; ntfonts conversion of '+version,4:'Noto Color Emoji sbix',6:'NotoColorEmoji-sbix',10:'Color emoji font using sbix glyph data, converted by ntfonts from the Noto Color Emoji CBDT build.'}
+ for record in font['name'].names:
+  if record.nameID in names:record.string=names[record.nameID].encode(record.getEncoding(),errors='replace')
+ dest=sbixdir/'NotoColorEmoji-sbix.ttf'; font.save(dest)
+ shutil.copyfile(args.cache/'notocoloremoji-OFL.txt',sbixdir/'notocoloremoji.OFL.txt')
+ (sbixdir/'subsets.sha256').write_text(f'{hashlib.sha256(dest.read_bytes()).hexdigest()}  {dest.name}\n')
+ print('sbix bytes:',dest.stat().st_size)
 else:
  families=[('A','literata','Literata','opsz,wght',12),('B','newsreader','Newsreader','opsz,wght',16),('C','ibmplexsans','IBMPlexSans','wdth,wght',None),('D','sourceserif4','SourceSerif4','opsz,wght',16),('E','iosevka','Iosevka',None,None),('F','ibmplexmono','IBMPlexMono',None,None),('G','jetbrainsmono','JetBrainsMono','wght',None)]
  coverage={}
