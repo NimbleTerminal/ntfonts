@@ -19,8 +19,9 @@ license is in `<family>.OFL.txt` and in THIRD_PARTY_NOTICES.md, generated with
 The symbol fallback combines Noto Sans Symbols 2 with missing arrows/math from
 Noto Sans Math, both pinned to the Google Fonts commit above. Their licenses
 are `notosanssymbols2.OFL.txt` and `notosansmath.OFL.txt`; `Licenses()` includes
-both texts in the fallback entry. The separate `cjk/` module ships its own OFL
-and generated notices for Noto Sans CJK SC.
+both texts in the fallback entry. The separate `cjk/`, `packs/`, `packs/emoji/`
+and `packs/emoji/sbix/` modules ship their own `sources.json`, OFL texts and
+generated `THIRD_PARTY_NOTICES.md` for their Noto fonts.
 
 The Go reference fonts (`Go-*.ttf`, `GoMono-*.ttf`) are unused and carry their
 own license in `LICENSE.gofont`.

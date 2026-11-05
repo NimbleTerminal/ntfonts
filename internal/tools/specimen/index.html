@@ -55,10 +55,11 @@ const samples=[
  ['Greek & Cyrillic','Ελληνικά: Καλημέρα κόσμε!\nРусский: Съешь ещё этих мягких французских булок.\nУкраїнська: Ґанок, їжак, єдність.'],
  ['Arrows, math & interface','← ↑ → ↓ ↔ ⇒ ∑ ∏ ∫ √ ∞ ≠ ≤ ≥ ± × ÷\n▸ ▾ ▶ ▼ ◦ ▪ ■ □ ✓ ✔ ✗ ✘ ★ ☀ ☂'],
  ['Box drawing & geometry','┌────────┬────────┐\n│ ░▒▓█   │ ○ ● ◇ ◆ │\n└────────┴────────┘'],
- ['CJK · Simplified Chinese shapes','中文：你好，世界。漢字\nかな カタカナ · 한글 한국어\nCommon-use boundary: 字 / 𠀀']
+ ['CJK · Simplified Chinese shapes','中文：你好，世界。漢字\nかな カタカナ · 한글 한국어\nCommon-use boundary: 字 / 𠀀'],
+ ['Script & emoji packs','Arabic: مرحبا بالعالم · اللغة العربية · لا · تَجْرِبَة · فارسی\nHebrew: שלום עולם · עברית\nDevanagari: नमस्ते दुनिया · क्ष त्र ज्ञ · Bengali: বাংলা ভাষা · শুভ সন্ধ্যা\nTamil: தமிழ் மொழி · வணக்கம் · Thai: สวัสดีชาวโลก · ภาษาไทย · Khmer: ជម្រាបសួរ ពិភពលោក · ភាសាខ្មែរ\nEmoji: 😀 🚀 🐱 👨‍👩‍👧‍👦 🇺🇳 👍🏽']
 ];
 let catalog=[], generation=0;
-const cache=new Map();
+const cache=new Map(), rejected=new Set();
 // Read actual cmap glyph indices rather than trusting the browser's font fallback.
 function cmap(buffer){
  const d=new DataView(buffer),u16=o=>d.getUint16(o),u32=o=>d.getUint32(o);
@@ -89,15 +90,18 @@ async function load(face){
  if(!cache.has(face.url))cache.set(face.url,(async()=>{
   const response=await fetch(face.url);if(!response.ok)throw Error('Could not load '+face.family);
   const buffer=await response.arrayBuffer(),has=cmap(buffer),name='Specimen'+catalog.indexOf(face);
-  const font=new FontFace(name,buffer);await font.load();document.fonts.add(font);
+  const font=new FontFace(name,buffer);
+  try{await font.load()}catch(error){rejected.add(face.url);throw error}
+  document.fonts.add(font);
   return {...face,name,has};
  })().catch(error=>{cache.delete(face.url);throw error}));
  return cache.get(face.url);
 }
 // Color fonts name the font-tech() they need. Only trust CSS.supports when the
-// browser understands font-tech queries at all; otherwise try the first file.
+// browser understands font-tech queries at all; otherwise try the first file
+// and remember any format FontFace.load() rejects for the session.
 const techQuery=globalThis.CSS&&typeof CSS.supports==='function'&&CSS.supports('font-tech(variations)');
-function usable(f){return !f.tech||!techQuery||CSS.supports('font-tech('+f.tech+')')}
+function usable(f){return !rejected.has(f.url)&&(!f.tech||!techQuery||CSS.supports('font-tech('+f.tech+')'))}
 // pick returns the candidate files for a family, best variant first; two
 // color emoji files share a variant, so a failed load falls through to the
 // next candidate (a browser that cannot answer font-tech still reaches sbix).

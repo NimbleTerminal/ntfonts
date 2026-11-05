@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add `Source.Fallbacks()` on `cjk`, `scregular` and `scbold` so renderers can
+  discover regional fallback families through the source value, matching the
+  core, `packs`, `emoji` and `sbix` modules.
+
 ## v0.3.0 - 2026-11-04
 
 - Add `Files()` and `WebFaces()` to `cjk`, `scregular` and `scbold` so hosts

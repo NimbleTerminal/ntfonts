@@ -20,6 +20,9 @@ var Embedded Source
 // matches their content; SC shapes are not a substitute for JP, TC, or KR shapes.
 func Fallbacks() []string { return scregular.Fallbacks() }
 
+// Fallbacks returns the same regional families through the source itself.
+func (Source) Fallbacks() []string { return Fallbacks() }
+
 // Face returns Regular for Regular/Italic and Bold for Bold/BoldItalic.
 func (Source) Face(family, variant string) ([]byte, error) {
 	switch variant {

@@ -21,6 +21,9 @@ var Embedded Source
 // Fallbacks returns the regional family served by this package.
 func Fallbacks() []string { return []string{"Noto Sans CJK SC"} }
 
+// Fallbacks returns the same regional family through the source itself.
+func (Source) Fallbacks() []string { return Fallbacks() }
+
 // Face returns SC Bold bytes for Regular, Italic, Bold, or BoldItalic.
 // Unknown families and variants are errors. Returned bytes may be modified.
 func (Source) Face(family, variant string) ([]byte, error) {

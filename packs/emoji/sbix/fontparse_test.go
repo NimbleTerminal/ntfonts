@@ -126,6 +126,71 @@ func glyfBox(t map[string][]byte, gid int) (contours, xMin, yMin, xMax, yMax int
 	return i16(g, 0), i16(g, 2), i16(g, 4), i16(g, 6), i16(g, 8), false
 }
 
+// contourAreas returns twice the signed area of each contour in a simple glyph.
+func contourAreas(t map[string][]byte, gid int) []int {
+	loca, glyf := t["loca"], t["glyf"]
+	var start, end int
+	if i16(t["head"], 50) == 0 {
+		start, end = 2*u16(loca, 2*gid), 2*u16(loca, 2*gid+2)
+	} else {
+		start, end = u32(loca, 4*gid), u32(loca, 4*gid+4)
+	}
+	if start == end {
+		return nil
+	}
+	g := glyf[start:end]
+	nc := i16(g, 0)
+	if nc <= 0 {
+		return nil
+	}
+	npts := u16(g, 10+2*(nc-1)) + 1
+	p := 12 + 2*nc + u16(g, 10+2*nc)
+	flags := make([]byte, 0, npts)
+	for len(flags) < npts {
+		f := g[p]
+		p++
+		flags = append(flags, f)
+		if f&8 != 0 {
+			for range g[p] {
+				flags = append(flags, f)
+			}
+			p++
+		}
+	}
+	coords := func(shortBit, sameBit byte) []int {
+		out, v := make([]int, npts), 0
+		for i, f := range flags {
+			switch {
+			case f&shortBit != 0 && f&sameBit != 0:
+				v += int(g[p])
+				p++
+			case f&shortBit != 0:
+				v -= int(g[p])
+				p++
+			case f&sameBit == 0:
+				v += i16(g, p)
+				p += 2
+			}
+			out[i] = v
+		}
+		return out
+	}
+	xs, ys := coords(2, 16), coords(4, 32)
+	areas, first := make([]int, nc), 0
+	for c := range nc {
+		last := u16(g, 10+2*c)
+		for i := first; i <= last; i++ {
+			j := i + 1
+			if i == last {
+				j = first
+			}
+			areas[c] += xs[i]*ys[j] - xs[j]*ys[i]
+		}
+		first = last + 1
+	}
+	return areas
+}
+
 // nameString returns the Windows Unicode string for a name ID.
 func nameString(t map[string][]byte, id int) string {
 	name := t["name"]

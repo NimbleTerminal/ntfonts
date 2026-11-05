@@ -16,6 +16,14 @@ import (
 )
 
 func TestFaces(t *testing.T) {
+	if !slices.Equal(cjk.Fallbacks(), []string{"Noto Sans CJK SC"}) || !slices.Equal(cjk.Embedded.Fallbacks(), cjk.Fallbacks()) {
+		t.Fatal(cjk.Fallbacks())
+	}
+	got := cjk.Embedded.Fallbacks()
+	got[0] = "changed"
+	if cjk.Embedded.Fallbacks()[0] != "Noto Sans CJK SC" {
+		t.Fatal("fallback slice is shared")
+	}
 	for _, family := range cjk.Fallbacks() {
 		for _, variant := range []string{"Regular", "Bold", "Italic", "BoldItalic"} {
 			data, err := cjk.Embedded.Face(family, variant)

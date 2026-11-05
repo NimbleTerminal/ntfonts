@@ -95,10 +95,14 @@ func TestDerivedFromCBDT(t *testing.T) {
 	}
 }
 
-// TestGlyfBoxes checks the bounding boxes Chrome needs: two contours over the
-// bitmap's design-space box for bitmap glyphs, nothing for the rest.
+// TestGlyfBoxes checks the bounding boxes Chrome needs: two opposite-winding
+// contours over the bitmap's design-space box for bitmap glyphs, nothing for
+// the rest, and maxp outline limits large enough for them.
 func TestGlyfBoxes(t *testing.T) {
 	got, src := parsed(t, face(t, "Regular")), parsed(t, cbdt(t))
+	if maxPoints, maxContours := u16(got["maxp"], 6), u16(got["maxp"], 8); maxPoints < 8 || maxContours < 2 {
+		t.Fatalf("maxp maxPoints=%d maxContours=%d, want at least 8 and 2", maxPoints, maxContours)
+	}
 	ppem, want, err := cbdtBitmaps(src)
 	if err != nil {
 		t.Fatal(err)
@@ -121,6 +125,9 @@ func TestGlyfBoxes(t *testing.T) {
 		// CBDT metrics rather than hard-coding it.
 		if xMin != scale(w.x) || yMin != scale(w.y) || xMax != scale(w.x+136) || yMax != scale(w.y+128) {
 			t.Fatalf("glyph %d box (%d,%d)-(%d,%d)", gid, xMin, yMin, xMax, yMax)
+		}
+		if areas := contourAreas(got, gid); len(areas) != 2 || areas[0] == 0 || areas[0]+areas[1] != 0 {
+			t.Fatalf("glyph %d contour areas %v do not cancel", gid, areas)
 		}
 	}
 }

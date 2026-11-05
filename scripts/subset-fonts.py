@@ -147,6 +147,7 @@ elif args.emoji:
   glyf.glyphs[name]=pen.glyph()
  table.strikes[ppem]=strike
  font['sbix']=table; font['glyf']=glyf; font['loca']=newTable('loca')
+ font['maxp'].maxPoints=8; font['maxp'].maxContours=2
  del font['CBDT'],font['CBLC']
  version=next(r.toUnicode() for r in font['name'].names if r.nameID==5)
  names={1:'Noto Color Emoji sbix',3:'Noto Color Emoji sbix; ntfonts conversion of '+version,4:'Noto Color Emoji sbix',6:'NotoColorEmoji-sbix',10:'Color emoji font using sbix glyph data, converted by ntfonts from the Noto Color Emoji CBDT build.'}

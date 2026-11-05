@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -19,6 +20,7 @@ func TestLeafFaces(t *testing.T) {
 	for _, tc := range []struct {
 		name, weight string
 		source       interface {
+			Fallbacks() []string
 			Face(string, string) ([]byte, error)
 		}
 		families []string
@@ -30,8 +32,13 @@ func TestLeafFaces(t *testing.T) {
 		{"scbold", "Bold", scbold.Embedded, scbold.Fallbacks(), scbold.Licenses(), scbold.Files(), scbold.WebFaces()},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			if len(tc.families) != 1 || tc.families[0] != "Noto Sans CJK SC" {
+			if len(tc.families) != 1 || tc.families[0] != "Noto Sans CJK SC" || !slices.Equal(tc.source.Fallbacks(), tc.families) {
 				t.Fatal(tc.families)
+			}
+			got := tc.source.Fallbacks()
+			got[0] = "changed"
+			if tc.source.Fallbacks()[0] != "Noto Sans CJK SC" {
+				t.Fatal("fallback slice is shared")
 			}
 			if len(tc.licenses) != 1 || tc.licenses[0] != cjk.Licenses()[0] {
 				t.Fatal("inconsistent shared notice")
