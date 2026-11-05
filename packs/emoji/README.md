@@ -39,21 +39,24 @@ The `ofl/notocoloremoji` font in google/fonts is a 25 MB COLRv1 build with an
 SVG table and no CBDT. It is not suitable here, and a test asserts that the
 embedded file has CBDT and CBLC tables and no COLR, CPAL or SVG table.
 
-Browsers: Chrome and Firefox render CBDT color fonts. Safari does not, and
-substitutes the platform emoji font when this face is offered through
-`fontFaces`.
+Browsers: Chrome and Firefox render CBDT color fonts. Safari does not. The
+companion module `nimbleterminal.dev/ntfonts/packs/emoji/sbix` carries the
+same bitmaps as an sbix font that Safari renders; `WebFace.Tech` names each
+file's format (`color-CBDT` here) so a page can choose with
+`CSS.supports("font-tech(...)")`. See [the sbix README](sbix/README.md) for
+the format-selection and lazy-loading example.
 
 ## Serving the face to a browser terminal
 
 ```go
 mux.Handle("/fonts/", http.StripPrefix("/fonts/", http.FileServer(http.FS(emoji.Files()))))
 for _, f := range emoji.WebFaces() {
-	// emit {family: f.Family, src: "/fonts/" + f.File, weight: f.Weight, style: f.Style}
+	// emit {family: f.Family, src: "/fonts/" + f.File, weight: f.Weight, style: f.Style, tech: f.Tech}
 }
 ```
 
 ```json
-{"fontFaces": [{"family": "Noto Color Emoji", "src": "/fonts/NotoColorEmoji.ttf", "weight": 400, "style": "normal"}]}
+{"fontFaces": [{"family": "Noto Color Emoji", "src": "/fonts/NotoColorEmoji.ttf", "weight": 400, "style": "normal", "tech": "color-CBDT"}]}
 ```
 
 ## Regenerating

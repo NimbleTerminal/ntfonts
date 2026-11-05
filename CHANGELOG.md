@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Add the optional `nimbleterminal.dev/ntfonts/packs/emoji/sbix` module: Noto
+  Color Emoji as an sbix font for Safari, derived by `scripts/subset-fonts.py
+  --emoji` from the pinned CBDT file. `packs/emoji`'s `WebFace` gains `Tech`.
+- The specimen viewer catalogs both color emoji files and loads the first
+  whose `font-tech()` the browser supports.
+- Release harmony now spans five modules (`packs/emoji/sbix/vX.Y.Z`).
+
 ## v0.3.0 - 2026-11-04
 
 - Add the optional `nimbleterminal.dev/ntfonts/packs` module: seven Noto Sans

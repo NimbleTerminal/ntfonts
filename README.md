@@ -128,11 +128,14 @@ subsets with every OpenType layout feature retained so Arabic joining, Indic
 reordering and mark positioning shape correctly: `arabic`, `hebrew`,
 `devanagari`, `bengali`, `tamil`, `thai` and `khmer` (1,068,724 bytes in all;
 the `packs` package serves all seven). `nimbleterminal.dev/ntfonts/packs/emoji`
-embeds Noto Color Emoji unmodified as a CBDT bitmap font (10,673,480 bytes).
+embeds Noto Color Emoji unmodified as a CBDT bitmap font (10,673,480 bytes), and
+`nimbleterminal.dev/ntfonts/packs/emoji/sbix` the same bitmaps as an sbix font
+(10,845,476 bytes) for Safari, which rejects CBDT.
 
 ```sh
 go get nimbleterminal.dev/ntfonts/packs/arabic
 go get nimbleterminal.dev/ntfonts/packs/emoji
+go get nimbleterminal.dev/ntfonts/packs/emoji/sbix
 ```
 
 Family names are the upstream names (`Noto Sans Arabic` ... `Noto Sans Khmer`,
@@ -140,9 +143,11 @@ Family names are the upstream names (`Noto Sans Arabic` ... `Noto Sans Khmer`,
 in a browser. Every pack, and now `cjk`, also exposes `Files()` and
 `WebFaces()`: an `fs.FS` of the font files plus descriptors matching
 ntwebterm's `fontFaces` option, so a booba host can serve identical bytes to its
-browser terminal. See [the packs README](packs/README.md) and
-[the emoji README](packs/emoji/README.md) for sizes, coverage, the Safari CBDT
-caveat and regeneration. Automated checks do not establish visual quality; the
+browser terminal. The two emoji modules' `WebFace` values carry `Tech`, the CSS
+`font-tech()` keyword, so a page picks the format its browser supports with
+`CSS.supports` instead of sniffing user agents. See [the packs README](packs/README.md),
+[the emoji README](packs/emoji/README.md) and [the sbix README](packs/emoji/sbix/README.md)
+for sizes, coverage, browser support, the integration example and regeneration. Automated checks do not establish visual quality; the
 specimen viewer catalogs these faces for coverage, not shaping.
 
 ### Go reference fonts
@@ -180,7 +185,8 @@ Use `task specimen -- -addr 127.0.0.1:8090` to choose another port.
 The viewer has family/variant and size controls, editable text, multilingual
 samples, and side-by-side comparisons with symbol, SC CJK and script/emoji
 pack fallbacks. Pack faces are rendered one code point at a time: a coverage
-check, not a shaping check.
+check, not a shaping check. Color emoji loads the first file whose format the
+browser reports supporting: CBDT in Chrome and Firefox, sbix in Safari.
 It reads each font's cmap and marks missing characters explicitly, preventing
 browser system-font fallback from disguising missing coverage. Hover a glyph
 for its source face or missing codepoint. Browser shaping is not nttypeset layout.
